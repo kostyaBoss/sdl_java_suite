@@ -171,7 +171,7 @@ public class LockScreenManager extends BaseSubManager {
 		// add hmi listener
 		hmiListener = new OnRPCNotificationListener() {
 			@Override
-			public void onNotified(RPCNotification notification) {
+			public void onNotified(RPCNotification notification, String applicationId) {
 				OnHMIStatus onHMIStatus = (OnHMIStatus)notification;
 				if (onHMIStatus.getWindowID() != null && onHMIStatus.getWindowID() != PredefinedWindows.DEFAULT_WINDOW.getValue()) {
 					return;
@@ -185,7 +185,7 @@ public class LockScreenManager extends BaseSubManager {
 		// set up driver distraction listener
 		ddListener = new OnRPCNotificationListener() {
 			@Override
-			public void onNotified(RPCNotification notification) {
+			public void onNotified(RPCNotification notification, String applicationId) {
 				// do something with the status
 				if (notification != null) {
 					OnDriverDistraction ddState = (OnDriverDistraction) notification;
@@ -225,7 +225,7 @@ public class LockScreenManager extends BaseSubManager {
 		if (deviceLogoEnabled) {
 			systemRequestListener = new OnRPCNotificationListener() {
 				@Override
-				public void onNotified(RPCNotification notification) {
+				public void onNotified(RPCNotification notification, String applicationId) {
 					// do something with the status
 					final OnSystemRequest msg = (OnSystemRequest) notification;
 					if (msg.getRequestType() == RequestType.LOCK_SCREEN_ICON_URL &&

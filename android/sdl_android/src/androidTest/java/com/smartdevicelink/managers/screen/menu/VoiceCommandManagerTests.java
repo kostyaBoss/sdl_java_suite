@@ -64,6 +64,7 @@ public class VoiceCommandManagerTests extends AndroidTestCase2 {
 	private VoiceCommandManager voiceCommandManager;
 	private static final int voiceCommandIdMin = 1900000000;
 	private OnRPCNotificationListener onHMIStatusListener, commandListener;
+	private final String applicationId = "12345678";
 
 	// SETUP / HELPERS
 
@@ -183,7 +184,7 @@ public class VoiceCommandManagerTests extends AndroidTestCase2 {
 		OnCommand onCommand = new OnCommand();
 		onCommand.setCmdID(command3.getCommandId());
 		onCommand.setTriggerSource(TriggerSource.TS_VR); // these are voice commands
-		commandListener.onNotified(onCommand); // send off the notification
+		commandListener.onNotified(onCommand, applicationId); // send off the notification
 
 		// verify the mock listener has only been hit once
 		verify(command3.getVoiceCommandSelectionListener(), times(1)).onVoiceCommandSelected();
@@ -193,7 +194,7 @@ public class VoiceCommandManagerTests extends AndroidTestCase2 {
 	private void sendFakeCoreOnHMIFullNotifications() {
 		OnHMIStatus onHMIStatusFakeNotification = new OnHMIStatus();
 		onHMIStatusFakeNotification.setHmiLevel(HMILevel.HMI_FULL);
-		onHMIStatusListener.onNotified(onHMIStatusFakeNotification);
+		onHMIStatusListener.onNotified(onHMIStatusFakeNotification, applicationId);
 	}
 
 }

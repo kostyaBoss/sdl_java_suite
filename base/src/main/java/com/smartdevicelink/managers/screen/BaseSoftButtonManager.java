@@ -143,7 +143,7 @@ abstract class BaseSoftButtonManager extends BaseSubManager {
         // Add OnHMIStatusListener to keep currentHMILevel updated
         this.onHMIStatusListener = new OnRPCNotificationListener() {
             @Override
-            public void onNotified(RPCNotification notification) {
+            public void onNotified(RPCNotification notification, String applicationId) {
                 OnHMIStatus onHMIStatus = (OnHMIStatus)notification;
                 if (onHMIStatus.getWindowID() != null && onHMIStatus.getWindowID() != PredefinedWindows.DEFAULT_WINDOW.getValue()) {
                     return;
@@ -168,7 +168,7 @@ abstract class BaseSoftButtonManager extends BaseSubManager {
         // Add OnButtonPressListener to notify SoftButtonObjects when there is a button press
         this.onButtonPressListener = new OnRPCNotificationListener() {
             @Override
-            public void onNotified(RPCNotification notification) {
+            public void onNotified(RPCNotification notification, String applicationId) {
                 OnButtonPress onButtonPress = (OnButtonPress) notification;
                 if (onButtonPress!= null && onButtonPress.getButtonName() == ButtonName.CUSTOM_BUTTON) {
                     Integer buttonId = onButtonPress.getCustomButtonName();
@@ -189,7 +189,7 @@ abstract class BaseSoftButtonManager extends BaseSubManager {
         // Add OnButtonEventListener to notify SoftButtonObjects when there is a button event
         this.onButtonEventListener = new OnRPCNotificationListener() {
             @Override
-            public void onNotified(RPCNotification notification) {
+            public void onNotified(RPCNotification notification, String applicationId) {
                 OnButtonEvent onButtonEvent = (OnButtonEvent) notification;
                 if (onButtonEvent!= null && onButtonEvent.getButtonName() == ButtonName.CUSTOM_BUTTON) {
                     Integer buttonId = onButtonEvent.getCustomButtonID();

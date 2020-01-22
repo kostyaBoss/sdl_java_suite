@@ -100,7 +100,7 @@ abstract class BasePermissionManager extends BaseSubManager{
         // Set PermissionManager's OnHMIStatusListener to keep currentHMILevel updated and call developer's listeners if needed
         onHMIStatusListener = new OnRPCNotificationListener() {
             @Override
-            public void onNotified(RPCNotification notification) {
+            public void onNotified(RPCNotification notification, String applicationId) {
                 OnHMIStatus onHMIStatus = (OnHMIStatus)notification;
                 if (onHMIStatus.getWindowID() != null && onHMIStatus.getWindowID() != PredefinedWindows.DEFAULT_WINDOW.getValue()) {
                     return;
@@ -116,7 +116,7 @@ abstract class BasePermissionManager extends BaseSubManager{
         // Set PermissionManager's PermissionsChangeListener to keep currentPermissionItems updated and call developer's listeners if needed
         onPermissionsChangeListener = new OnRPCNotificationListener() {
             @Override
-            public void onNotified(RPCNotification notification) {
+            public void onNotified(RPCNotification notification, String applicationId) {
                 List<PermissionItem> permissionItems = ((OnPermissionsChange)notification).getPermissionItem();
                 Map<FunctionID, PermissionItem> previousPermissionItems = currentPermissionItems;
                 Boolean requireEncryptionAppLevel = ((OnPermissionsChange) notification).getRequireEncryption();

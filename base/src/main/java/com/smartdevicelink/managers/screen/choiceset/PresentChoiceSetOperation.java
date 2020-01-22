@@ -345,7 +345,7 @@ class PresentChoiceSetOperation extends AsynchronousOperation {
 
 		keyboardRPCListener = new OnRPCNotificationListener() {
 			@Override
-			public void onNotified(RPCNotification notification) {
+			public void onNotified(RPCNotification notification, String applicationId) {
 				if (isCancelled()) {
 					finishOperation();
 					return;

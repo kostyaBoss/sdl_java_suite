@@ -35,5 +35,5 @@ import com.smartdevicelink.proxy.RPCNotification;
 
 public abstract class OnRPCNotificationListener {
 	
-	public abstract void onNotified(RPCNotification notification);
+	public abstract void onNotified(RPCNotification notification, String applicationId);
 }

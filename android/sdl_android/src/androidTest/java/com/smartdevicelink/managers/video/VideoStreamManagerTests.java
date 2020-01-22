@@ -57,6 +57,7 @@ public class VideoStreamManagerTests extends AndroidTestCase2 {
 	public static final String TAG = "VideoStreamManagerTests";
 	private Context mTestContext;
 	private static boolean touchEventOccured = false;
+	private final String applicationId = "12345678";
 
 	// SETUP / HELPERS
 
@@ -237,7 +238,7 @@ public class VideoStreamManagerTests extends AndroidTestCase2 {
 
 				OnHMIStatus fullNotification = new OnHMIStatus();
 				fullNotification.setHmiLevel(HMILevel.HMI_FULL);
-				hmiListener[0].onNotified(fullNotification);
+				hmiListener[0].onNotified(fullNotification, applicationId);
 
 				videoStreamManager.startRemoteDisplayStream(mTestContext, TestPresentation.class, null, false);
 

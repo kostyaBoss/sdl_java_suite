@@ -77,6 +77,7 @@ public class MenuManagerTests extends AndroidTestCase2 {
 	private MenuManager menuManager;
 	private List<MenuCell> cells;
 	private MenuCell mainCell1, mainCell4;
+	private final String applicationId = "12345678";
 
 	// SETUP / HELPERS
 
@@ -226,7 +227,7 @@ public class MenuManagerTests extends AndroidTestCase2 {
 				OnCommand onCommand = new OnCommand();
 				onCommand.setCmdID(cell.getCellId());
 				onCommand.setTriggerSource(TriggerSource.TS_MENU); // these are menu commands
-				commandListener.onNotified(onCommand); // send off the notification
+				commandListener.onNotified(onCommand, applicationId); // send off the notification
 
 				// verify the mock listener has only been hit once for a root cell
 				verify(cell.getMenuSelectionListener(), times(1)).onTriggered(TriggerSource.TS_MENU);
@@ -237,7 +238,7 @@ public class MenuManagerTests extends AndroidTestCase2 {
 				OnCommand onCommand2 = new OnCommand();
 				onCommand2.setCmdID(cell.getCellId());
 				onCommand2.setTriggerSource(TriggerSource.TS_MENU); // these are menu commands
-				commandListener.onNotified(onCommand2); // send off the notification
+				commandListener.onNotified(onCommand2, applicationId); // send off the notification
 
 				// verify the mock listener has only been hit once for a sub cell
 				verify(cell.getMenuSelectionListener(), times(1)).onTriggered(TriggerSource.TS_MENU);
@@ -508,7 +509,7 @@ public class MenuManagerTests extends AndroidTestCase2 {
 	private void sendFakeCoreOnHMIFullNotifications() {
 		OnHMIStatus onHMIStatusFakeNotification = new OnHMIStatus();
 		onHMIStatusFakeNotification.setHmiLevel(HMILevel.HMI_FULL);
-		onHMIStatusListener.onNotified(onHMIStatusFakeNotification);
+		onHMIStatusListener.onNotified(onHMIStatusFakeNotification, applicationId);
 	}
 
 	// CREATING CELLS FOR TEST CASES

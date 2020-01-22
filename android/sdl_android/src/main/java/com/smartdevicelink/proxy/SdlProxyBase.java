@@ -2146,7 +2146,7 @@ public abstract class SdlProxyBase<proxyListenerType extends IProxyListenerBase>
 
 	private OnRPCNotificationListener onPermissionsChangeListener = new OnRPCNotificationListener() {
 		@Override
-		public void onNotified(RPCNotification notification) {
+		public void onNotified(RPCNotification notification, String applicationId) {
 			List<PermissionItem> permissionItems = ((OnPermissionsChange) notification).getPermissionItem();
 			Boolean requireEncryptionAppLevel = ((OnPermissionsChange) notification).getRequireEncryption();
 			encryptionRequiredRPCs.clear();
@@ -2427,7 +2427,7 @@ public abstract class SdlProxyBase<proxyListenerType extends IProxyListenerBase>
 			CopyOnWriteArrayList<OnRPCNotificationListener> listeners = rpcNotificationListeners.get(FunctionID.getFunctionId(notification.getFunctionName()));
 			if(listeners!=null && listeners.size()>0) {
 				for (OnRPCNotificationListener listener : listeners) {
-					listener.onNotified(notification);
+					listener.onNotified(notification, getAppID());
 				}
 				return true;
 			}
@@ -8326,7 +8326,7 @@ public abstract class SdlProxyBase<proxyListenerType extends IProxyListenerBase>
 			//Take care of the touch events
 			internalInterface.addOnRPCNotificationListener(FunctionID.ON_TOUCH_EVENT, new OnRPCNotificationListener() {
 				@Override
-				public void onNotified(RPCNotification notification) {
+				public void onNotified(RPCNotification notification, String applicationId) {
 					if (notification != null && remoteDisplay != null) {
 						List<MotionEvent> events = convertTouchEvent((OnTouchEvent) notification);
 						if (events != null && !events.isEmpty()) {

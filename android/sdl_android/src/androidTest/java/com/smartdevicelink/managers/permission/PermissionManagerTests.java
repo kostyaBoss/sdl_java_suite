@@ -33,7 +33,7 @@ public class PermissionManagerTests extends AndroidTestCase2 {
     private OnRPCNotificationListener onHMIStatusListener, onPermissionsChangeListener;
     private PermissionManager permissionManager;
     private int listenerCalledCounter;
-
+    private final String applicationId = "12345678";
 
     @Override
     protected void setUp() throws Exception {
@@ -80,7 +80,7 @@ public class PermissionManagerTests extends AndroidTestCase2 {
         if (hmiLevel != null) {
             OnHMIStatus onHMIStatusFakeNotification = new OnHMIStatus();
             onHMIStatusFakeNotification.setHmiLevel(hmiLevel);
-            onHMIStatusListener.onNotified(onHMIStatusFakeNotification);
+            onHMIStatusListener.onNotified(onHMIStatusFakeNotification, applicationId);
         }
     }
 
@@ -89,7 +89,7 @@ public class PermissionManagerTests extends AndroidTestCase2 {
         if (permissionItems != null) {
             OnPermissionsChange onPermissionChangeFakeNotification = new OnPermissionsChange();
             onPermissionChangeFakeNotification.setPermissionItem(permissionItems);
-            onPermissionsChangeListener.onNotified(onPermissionChangeFakeNotification);
+            onPermissionsChangeListener.onNotified(onPermissionChangeFakeNotification, applicationId);
         }
     }
 

@@ -134,10 +134,10 @@ abstract class BaseSdlManager {
         if (onRPCNotificationListeners != null) {
             Set<FunctionID> functionIDSet = onRPCNotificationListeners.keySet();
             if (functionIDSet != null && !functionIDSet.isEmpty()) {
-                queuedNotifications = new ConcurrentLinkedQueue<RPCNotification>();
+                queuedNotifications = new ConcurrentLinkedQueue<>();
                 queuedNotificationListener = new OnRPCNotificationListener() {
                     @Override
-                    public void onNotified(RPCNotification notification) {
+                    public void onNotified(RPCNotification notification, String applicationId) {
                         queuedNotifications.add(notification);
                     }
                 };
@@ -157,7 +157,7 @@ abstract class BaseSdlManager {
                     try {
                         OnRPCNotificationListener listener = onRPCNotificationListeners.get(notification.getFunctionID());
                         if (listener != null) {
-                            listener.onNotified(notification);
+                            listener.onNotified(notification, getAppId());
                         }
                     } catch (Exception e) {
                         DebugTool.logError("Error going through queued notifications", e);

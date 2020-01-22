@@ -143,7 +143,7 @@ public class VideoStreamManager extends BaseVideoStreamManager {
 
 	private final OnRPCNotificationListener hmiListener = new OnRPCNotificationListener() {
 		@Override
-		public void onNotified(RPCNotification notification) {
+		public void onNotified(RPCNotification notification, String applicationId) {
 			if(notification != null){
 				OnHMIStatus onHMIStatus = (OnHMIStatus)notification;
 				if (onHMIStatus.getWindowID() != null && onHMIStatus.getWindowID() != PredefinedWindows.DEFAULT_WINDOW.getValue()) {
@@ -163,7 +163,7 @@ public class VideoStreamManager extends BaseVideoStreamManager {
 
 	private final OnRPCNotificationListener touchListener = new OnRPCNotificationListener() {
 		@Override
-		public void onNotified(RPCNotification notification) {
+		public void onNotified(RPCNotification notification, String applicationId) {
 			if(notification != null && remoteDisplay != null){
 				List<MotionEvent> motionEventList = convertTouchEvent((OnTouchEvent)notification);
 				if (motionEventList != null && !motionEventList.isEmpty()) {

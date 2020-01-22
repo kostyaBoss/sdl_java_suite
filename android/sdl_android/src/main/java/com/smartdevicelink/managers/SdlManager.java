@@ -1147,6 +1147,16 @@ public class SdlManager extends BaseSdlManager{
 		}
 
 		/**
+		 * Set RPCNotification listener. SdlManager will preload listener before any RPCs are sent/received.
+		 * @param key represents the FunctionID of the notification
+		 * @param listener represents value of the listener
+		 */
+		public Builder addOnRPCNotificationListener(FunctionID key, OnRPCNotificationListener listener) {
+			sdlManager.addOnRPCNotificationListener(key, listener);
+			return this;
+		}
+
+		/**
 		 * Build SdlManager ang get it ready to be started
 		 * <strong>Note: new instance of SdlManager should be created on every connection. SdlManager cannot be reused after getting disposed.</strong>
 		 * @return SdlManager instance that is ready to be started

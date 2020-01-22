@@ -42,7 +42,7 @@ import com.smartdevicelink.util.DebugTool;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MenuCell implements Cloneable{
+public class MenuCell implements Cloneable {
 
 	/**
 	 * The cell's text to be displayed

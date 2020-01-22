@@ -47,7 +47,7 @@ public class SoftButtonManagerTests extends AndroidTestCase2 {
     private int softButtonObject1Id = 1000, softButtonObject2Id = 2000;
     private SoftButtonObject softButtonObject1, softButtonObject2;
     private SoftButtonState softButtonState1, softButtonState2, softButtonState3, softButtonState4;
-
+    private final String applicationId = "12345678";
 
     @Override
     public void setUp() throws Exception {
@@ -63,7 +63,7 @@ public class SoftButtonManagerTests extends AndroidTestCase2 {
                 OnRPCNotificationListener onHMIStatusListener = (OnRPCNotificationListener) args[1];
                 OnHMIStatus onHMIStatusFakeNotification = new OnHMIStatus();
                 onHMIStatusFakeNotification.setHmiLevel(HMILevel.HMI_FULL);
-                onHMIStatusListener.onNotified(onHMIStatusFakeNotification);
+                onHMIStatusListener.onNotified(onHMIStatusFakeNotification, applicationId);
                 return null;
             }
         };

@@ -1,16 +1,8 @@
 package com.sdl.hellosdlandroid;
 
-import android.annotation.SuppressLint;
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.Service;
-import android.content.Context;
-import android.content.Intent;
-import android.os.Build;
-import android.os.IBinder;
 import android.util.Log;
 
+import com.smartdevicelink.components.BaseSdlService;
 import com.smartdevicelink.managers.CompletionListener;
 import com.smartdevicelink.managers.SdlManager;
 import com.smartdevicelink.managers.SdlManagerListener;
@@ -38,9 +30,7 @@ import com.smartdevicelink.proxy.rpc.enums.MenuLayout;
 import com.smartdevicelink.proxy.rpc.enums.PredefinedWindows;
 import com.smartdevicelink.proxy.rpc.enums.TriggerSource;
 import com.smartdevicelink.proxy.rpc.listeners.OnRPCNotificationListener;
-import com.smartdevicelink.transport.BaseTransportConfig;
-import com.smartdevicelink.transport.MultiplexTransportConfig;
-import com.smartdevicelink.transport.TCPTransportConfig;
+import com.smartdevicelink.transport.TransportConfigHolder;
 import com.smartdevicelink.util.DebugTool;
 
 import java.util.ArrayList;
@@ -49,14 +39,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
 
-public class SdlService extends Service {
+public class SdlService extends BaseSdlService {
 
 	private static final String TAG 					= "SDL Service";
 
 	private static final String APP_NAME 				= "Hello Sdl";
 	private static final String APP_NAME_ES 			= "Hola Sdl";
 	private static final String APP_NAME_FR 			= "Bonjour Sdl";
-	private static final String APP_ID 					= "8678309";
+	private static final Integer FIRST_APP_ID 			= 8678309;
+	private static final Integer SECOND_APP_ID 			= 8678310;
+	private static final String SERVICE_NOTIFICATION_TITLE = "Connected through SDL";
 
 	private static final String ICON_FILENAME 			= "hello_sdl_icon.png";
 	private static final String SDL_IMAGE_FILENAME  	= "sdl_full_image.png";
@@ -71,167 +63,153 @@ public class SdlService extends Service {
 	// TCP/IP transport config
 	// The default port is 12345
 	// The IP is of the machine that is running SDL Core
-	private static final int TCP_PORT = 12247;
+	private static final int TCP_PORT = 12481;
 	private static final String DEV_MACHINE_IP_ADDRESS = "m.sdl.tools";
 
-	// variable to create and call functions of the SyncProxy
-	private SdlManager sdlManager = null;
-	private List<ChoiceCell> choiceCellList;
-
 	@Override
-	public IBinder onBind(Intent intent) {
-		return null;
+	public Integer provideServiceForegroundId() {
+		return FOREGROUND_SERVICE_ID;
 	}
 
 	@Override
-	public void onCreate() {
-		Log.d(TAG, "onCreate");
-		super.onCreate();
-
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-			enterForeground();
-		}
-	}
-
-	// Helper method to let the service enter foreground mode
-	@SuppressLint("NewApi")
-	public void enterForeground() {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-			NotificationChannel channel = new NotificationChannel(APP_ID, "SdlService", NotificationManager.IMPORTANCE_DEFAULT);
-			NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-			if (notificationManager != null) {
-				notificationManager.createNotificationChannel(channel);
-				Notification serviceNotification = new Notification.Builder(this, channel.getId())
-						.setContentTitle("Connected through SDL")
-						.setSmallIcon(R.drawable.ic_sdl)
-						.build();
-				startForeground(FOREGROUND_SERVICE_ID, serviceNotification);
-			}
-		}
+	public String provideServiceName() {
+		return APP_NAME;
 	}
 
 	@Override
-	public int onStartCommand(Intent intent, int flags, int startId) {
-		startProxy();
-		return START_STICKY;
+	public Integer provideServiceIcon() {
+		return R.drawable.ic_sdl;
 	}
 
 	@Override
-	public void onDestroy() {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-			stopForeground(true);
-		}
-
-		if (sdlManager != null) {
-			sdlManager.dispose();
-		}
-
-		super.onDestroy();
+	public String provideServiceNotificationTitle() {
+		return SERVICE_NOTIFICATION_TITLE;
 	}
 
-	private void startProxy() {
-		// This logic is to select the correct transport and security levels defined in the selected build flavor
-		// Build flavors are selected by the "build variants" tab typically located in the bottom left of Android Studio
-		// Typically in your app, you will only set one of these.
-		if (sdlManager == null) {
-			Log.i(TAG, "Starting SDL Proxy");
-			// Enable DebugTool for debug build type
-			if (BuildConfig.DEBUG){
-				DebugTool.enableDebugTool();
-			}
-			BaseTransportConfig transport = null;
-			if (BuildConfig.TRANSPORT.equals("MULTI")) {
-				int securityLevel;
-				if (BuildConfig.SECURITY.equals("HIGH")) {
-					securityLevel = MultiplexTransportConfig.FLAG_MULTI_SECURITY_HIGH;
-				} else if (BuildConfig.SECURITY.equals("MED")) {
-					securityLevel = MultiplexTransportConfig.FLAG_MULTI_SECURITY_MED;
-				} else if (BuildConfig.SECURITY.equals("LOW")) {
-					securityLevel = MultiplexTransportConfig.FLAG_MULTI_SECURITY_LOW;
-				} else {
-					securityLevel = MultiplexTransportConfig.FLAG_MULTI_SECURITY_OFF;
-				}
-				transport = new MultiplexTransportConfig(this, APP_ID, securityLevel);
-			} else if (BuildConfig.TRANSPORT.equals("TCP")) {
-				transport = new TCPTransportConfig(TCP_PORT, DEV_MACHINE_IP_ADDRESS, true);
-			} else if (BuildConfig.TRANSPORT.equals("MULTI_HB")) {
-				MultiplexTransportConfig mtc = new MultiplexTransportConfig(this, APP_ID, MultiplexTransportConfig.FLAG_MULTI_SECURITY_OFF);
-				mtc.setRequiresHighBandwidth(true);
-				transport = mtc;
-			}
+	@Override
+	public void configure() {
+        // This logic is to select the correct transport and security levels defined in the selected build flavor
+        // Build flavors are selected by the "build variants" tab typically located in the bottom left of Android Studio
+        // Typically in your app, you will only set one of these.
+        if (sdlManagerMap.size() == 0) {
+            Log.i(TAG, "Starting SDL Proxy");
+            // Enable DebugTool for debug build type
+            if (BuildConfig.DEBUG){
+                DebugTool.enableDebugTool();
+            }
 
-			// The app type to be used
-			Vector<AppHMIType> appType = new Vector<>();
-			appType.add(AppHMIType.DEFAULT);
+            // Create App Icon, this is set in the SdlManager builder
+            SdlArtwork appIcon = new SdlArtwork(ICON_FILENAME, FileType.GRAPHIC_PNG, R.mipmap.ic_launcher, true);
 
-			// The manager listener helps you know when certain events that pertain to the SDL Manager happen
-			// Here we will listen for ON_HMI_STATUS and ON_COMMAND notifications
-			SdlManagerListener listener = new SdlManagerListener() {
+            SdlManager firstApplicationManager = createManagerWithBaseConfiguration(
+			appIcon,
+					FIRST_APP_ID.toString()
+			);
+            SdlManager secondApplicationManager = createManagerWithBaseConfiguration(
+			appIcon,
+					SECOND_APP_ID.toString()
+			);
+
+			firstApplicationManager.start();
+			firstApplicationManager.addOnRPCNotificationListener(FunctionID.ON_HMI_STATUS, new OnRPCNotificationListener() {
 				@Override
-				public void onStart() {
-					// HMI Status Listener
-					sdlManager.addOnRPCNotificationListener(FunctionID.ON_HMI_STATUS, new OnRPCNotificationListener() {
-						@Override
-						public void onNotified(RPCNotification notification) {
-							OnHMIStatus onHMIStatus = (OnHMIStatus)notification;
-							if (onHMIStatus.getWindowID() != null && onHMIStatus.getWindowID() != PredefinedWindows.DEFAULT_WINDOW.getValue()) {
-								return;
-							}
-							if (onHMIStatus.getHmiLevel() == HMILevel.HMI_FULL && onHMIStatus.getFirstRun()) {
-								setVoiceCommands();
-								sendMenus();
-								performWelcomeSpeak();
-								performWelcomeShow();
-								preloadChoices();
-							}
-						}
-					});
-				}
-
-				@Override
-				public void onDestroy() {
-					SdlService.this.stopSelf();
-				}
-
-				@Override
-				public void onError(String info, Exception e) {
-				}
-
-				@Override
-				public LifecycleConfigurationUpdate managerShouldUpdateLifecycle(Language language){
-					String appName;
-					switch (language) {
-						case ES_MX:
-							appName = APP_NAME_ES;
-							break;
-						case FR_CA:
-							appName = APP_NAME_FR;
-							break;
-						default:
-							return null;
+				public void onNotified(RPCNotification notification, String applicationId) {
+					OnHMIStatus onHMIStatus = (OnHMIStatus) notification;
+					if (onHMIStatus.getWindowID() != null && onHMIStatus.getWindowID() != PredefinedWindows.DEFAULT_WINDOW.getValue()) {
+						return;
 					}
-
-					return new LifecycleConfigurationUpdate(appName,null,TTSChunkFactory.createSimpleTTSChunks(appName), null);
+					if (onHMIStatus.getHmiLevel() == HMILevel.HMI_FULL && onHMIStatus.getFirstRun()) {
+						SdlManager manager = sdlManagerMap.get(Integer.parseInt(applicationId));
+						setVoiceCommands(manager);
+						sendMenus(manager);
+					}
 				}
-			};
+			});
 
-			// Create App Icon, this is set in the SdlManager builder
-			SdlArtwork appIcon = new SdlArtwork(ICON_FILENAME, FileType.GRAPHIC_PNG, R.mipmap.ic_launcher, true);
+			secondApplicationManager.start();
+			secondApplicationManager.addOnRPCNotificationListener(FunctionID.ON_HMI_STATUS, new OnRPCNotificationListener() {
+				@Override
+				public void onNotified(RPCNotification notification, String applicationId) {
+					OnHMIStatus onHMIStatus = (OnHMIStatus) notification;
+					if (onHMIStatus.getWindowID() != null && onHMIStatus.getWindowID() != PredefinedWindows.DEFAULT_WINDOW.getValue()) {
+						return;
+					}
+					if (onHMIStatus.getHmiLevel() == HMILevel.HMI_FULL && onHMIStatus.getFirstRun()) {
+						SdlManager manager = sdlManagerMap.get(Integer.parseInt(applicationId));
+						performWelcomeSpeak(manager);
+						performWelcomeShow(manager);
+						preloadChoices(manager);
+					}
+				}
+			});
 
-			// The manager builder sets options for your session
-			SdlManager.Builder builder = new SdlManager.Builder(this, APP_ID, APP_NAME, listener);
-			builder.setAppTypes(appType);
-			builder.setTransportType(transport);
-			builder.setAppIcon(appIcon);
-			sdlManager = builder.build();
-			sdlManager.start();
+
+			// IMPORTANT
+			// ADD EVERY SDLMANAGER TO CONTAINER
+			sdlManagerMap.put(FIRST_APP_ID, firstApplicationManager);
+			sdlManagerMap.put(SECOND_APP_ID, secondApplicationManager);
 		}
+	}
+
+	private SdlManager createManagerWithBaseConfiguration(SdlArtwork appIcon, String appId) {
+		SdlManager localSdlManager;
+		// The app type to be used
+		Vector<AppHMIType> appType = new Vector<>();
+		appType.add(AppHMIType.DEFAULT);
+
+		// The manager listener helps you know when certain events that pertain to the SDL Manager happen
+		// Here we will listen for ON_HMI_STATUS and ON_COMMAND notifications
+		SdlManagerListener listener = new SdlManagerListener() {
+			@Override
+			public void onStart() { }
+
+			@Override
+			public void onDestroy() { stopSelf(); }
+
+			@Override
+			public void onError(String info, Exception e) { }
+
+			@Override
+			public LifecycleConfigurationUpdate managerShouldUpdateLifecycle(Language language) {
+				String appName;
+				switch (language) {
+					case ES_MX:
+						appName = APP_NAME_ES;
+						break;
+					case FR_CA:
+						appName = APP_NAME_FR;
+						break;
+					default:
+						return null;
+				}
+
+				return new LifecycleConfigurationUpdate(appName, null, TTSChunkFactory.createSimpleTTSChunks(appName), null);
+			}
+		};
+
+		// The manager builder sets options for your session
+		SdlManager.Builder builder = new SdlManager.Builder(this, appId, APP_NAME + appId, listener);
+		localSdlManager = builder.setAppTypes(appType)
+				.setTransportType(
+						TransportConfigHolder.getInstance().provide(
+								this,
+								BuildConfig.TRANSPORT,
+								BuildConfig.SECURITY,
+								appId,
+								TCP_PORT,
+								DEV_MACHINE_IP_ADDRESS
+						)
+				)
+				.setAppIcon(appIcon)
+				.build();
+
+		return localSdlManager;
 	}
 
 	/**
 	 * Send some voice commands
 	 */
-	private void setVoiceCommands(){
+	private void setVoiceCommands(SdlManager sdlManager){
 
 		List<String> list1 = Collections.singletonList("Command One");
 		List<String> list2 = Collections.singletonList("Command two");
@@ -256,7 +234,7 @@ public class SdlService extends Service {
 	/**
 	 *  Add menus for the app on SDL.
 	 */
-	private void sendMenus(){
+	private void sendMenus(final SdlManager sdlManager){
 
 		// some arts
 		SdlArtwork livio = new SdlArtwork("livio", FileType.GRAPHIC_PNG, R.drawable.sdl, false);
@@ -268,7 +246,7 @@ public class SdlService extends Service {
 			@Override
 			public void onTriggered(TriggerSource trigger) {
 				Log.i(TAG, "Test cell 1 triggered. Source: "+ trigger.toString());
-				showTest();
+				showTest(sdlManager);
 			}
 		});
 
@@ -301,7 +279,7 @@ public class SdlService extends Service {
 		MenuCell mainCell4 = new MenuCell("Show Perform Interaction", null, null, new MenuSelectionListener() {
 			@Override
 			public void onTriggered(TriggerSource trigger) {
-				showPerformInteraction();
+				showPerformInteraction(sdlManager);
 			}
 		});
 
@@ -311,7 +289,7 @@ public class SdlService extends Service {
 				Log.i(TAG, "Clearing Menu. Source: "+ trigger.toString());
 				// Clear this thing
 				sdlManager.getScreenManager().setMenu(Collections.<MenuCell>emptyList());
-				showAlert("Menu Cleared");
+				showAlert("Menu Cleared", sdlManager);
 			}
 		});
 
@@ -322,7 +300,7 @@ public class SdlService extends Service {
 	/**
 	 * Will speak a sample welcome message
 	 */
-	private void performWelcomeSpeak(){
+	private void performWelcomeSpeak(SdlManager sdlManager){
 		sdlManager.sendRPC(new Speak(TTSChunkFactory.createSimpleTTSChunks(WELCOME_SPEAK)));
 	}
 
@@ -331,7 +309,7 @@ public class SdlService extends Service {
 	 * Because we are setting multiple items, we will call beginTransaction() first,
 	 * and finish with commit() when we are done.
 	 */
-	private void performWelcomeShow() {
+	private void performWelcomeShow(SdlManager sdlManager) {
 		sdlManager.getScreenManager().beginTransaction();
 		sdlManager.getScreenManager().setTextField1(APP_NAME);
 		sdlManager.getScreenManager().setTextField2(WELCOME_SHOW);
@@ -349,7 +327,7 @@ public class SdlService extends Service {
 	/**
 	 * Will show a sample test message on screen as well as speak a sample test message
 	 */
-	private void showTest(){
+	private void showTest(SdlManager sdlManager){
 		sdlManager.getScreenManager().beginTransaction();
 		sdlManager.getScreenManager().setTextField1("Test Cell 1 has been selected");
 		sdlManager.getScreenManager().setTextField2("");
@@ -358,7 +336,7 @@ public class SdlService extends Service {
 		sdlManager.sendRPC(new Speak(TTSChunkFactory.createSimpleTTSChunks(TEST_COMMAND_NAME)));
 	}
 
-	private void showAlert(String text){
+	private void showAlert(String text, SdlManager sdlManager){
 		Alert alert = new Alert();
 		alert.setAlertText1(text);
 		alert.setDuration(5000);
@@ -367,20 +345,21 @@ public class SdlService extends Service {
 
 	// Choice Set
 
-	private void preloadChoices(){
+	private void preloadChoices(SdlManager sdlManager){
 		ChoiceCell cell1 = new ChoiceCell("Item 1");
 		ChoiceCell cell2 = new ChoiceCell("Item 2");
 		ChoiceCell cell3 = new ChoiceCell("Item 3");
-		choiceCellList = new ArrayList<>(Arrays.asList(cell1,cell2,cell3));
+		List<ChoiceCell> choiceCellList = new ArrayList<>(Arrays.asList(cell1, cell2, cell3));
 		sdlManager.getScreenManager().preloadChoices(choiceCellList, null);
 	}
 
-	private void showPerformInteraction(){
-		if (choiceCellList != null) {
-			ChoiceSet choiceSet = new ChoiceSet("Choose an Item from the list", choiceCellList, new ChoiceSetSelectionListener() {
+	private void showPerformInteraction(final SdlManager sdlManager){
+		List<ChoiceCell> choiceList = new ArrayList<>(sdlManager.getScreenManager().getPreloadedChoices());
+		if (!choiceList.isEmpty()) {
+			ChoiceSet choiceSet = new ChoiceSet("Choose an Item from the list", choiceList, new ChoiceSetSelectionListener() {
 				@Override
 				public void onChoiceSelected(ChoiceCell choiceCell, TriggerSource triggerSource, int rowIndex) {
-					showAlert(choiceCell.getText() + " was selected");
+					showAlert(choiceCell.getText() + " was selected", sdlManager);
 				}
 
 				@Override

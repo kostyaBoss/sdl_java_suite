@@ -28,6 +28,7 @@ public class LockScreenManagerTests extends AndroidTestCase2 {
 
 	private LockScreenManager lockScreenManager;
 	private OnRPCNotificationListener onDDListener;
+	private final String applicationId = "12345678";
 
 	@Override
 	public void setUp() throws Exception{
@@ -120,7 +121,7 @@ public class LockScreenManagerTests extends AndroidTestCase2 {
 		OnDriverDistraction onDriverDistraction = new OnDriverDistraction();
 		onDriverDistraction.setLockscreenDismissibility(true);
 		onDriverDistraction.setState(DriverDistractionState.DD_ON);
-		onDDListener.onNotified(onDriverDistraction);
+		onDDListener.onNotified(onDriverDistraction, applicationId);
 		assertTrue(lockScreenManager.enableDismissGesture);
 		assertTrue(lockScreenManager.mIsLockscreenDismissible);
 	}
@@ -130,7 +131,7 @@ public class LockScreenManagerTests extends AndroidTestCase2 {
 		OnDriverDistraction onDriverDistraction = new OnDriverDistraction();
 		onDriverDistraction.setLockscreenDismissibility(true);
 		onDriverDistraction.setState(DriverDistractionState.DD_ON);
-		onDDListener.onNotified(onDriverDistraction);
+		onDDListener.onNotified(onDriverDistraction, applicationId);
 		assertFalse(lockScreenManager.enableDismissGesture);
 		assertFalse(lockScreenManager.mIsLockscreenDismissible);
 	}
@@ -140,7 +141,7 @@ public class LockScreenManagerTests extends AndroidTestCase2 {
 		OnDriverDistraction onDriverDistraction = new OnDriverDistraction();
 		onDriverDistraction.setLockscreenDismissibility(false);
 		onDriverDistraction.setState(DriverDistractionState.DD_ON);
-		onDDListener.onNotified(onDriverDistraction);
+		onDDListener.onNotified(onDriverDistraction, applicationId);
 		assertTrue(lockScreenManager.enableDismissGesture);
 		assertFalse(lockScreenManager.mIsLockscreenDismissible);
 	}
@@ -150,7 +151,7 @@ public class LockScreenManagerTests extends AndroidTestCase2 {
 		OnDriverDistraction onDriverDistraction = new OnDriverDistraction();
 		onDriverDistraction.setLockscreenDismissibility(true);
 		onDriverDistraction.setState(DriverDistractionState.DD_ON);
-		onDDListener.onNotified(onDriverDistraction);
+		onDDListener.onNotified(onDriverDistraction, applicationId);
 		assertFalse(lockScreenManager.enableDismissGesture);
 		assertFalse(lockScreenManager.mIsLockscreenDismissible);
 	}

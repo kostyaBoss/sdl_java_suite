@@ -540,7 +540,7 @@ abstract class BaseChoiceSetManager extends BaseSubManager {
         // HMI UPDATES
         hmiListener = new OnRPCNotificationListener() {
             @Override
-            public void onNotified(RPCNotification notification) {
+            public void onNotified(RPCNotification notification, String applicationId) {
                 OnHMIStatus onHMIStatus = (OnHMIStatus)notification;
                 if (onHMIStatus.getWindowID() != null && onHMIStatus.getWindowID() != PredefinedWindows.DEFAULT_WINDOW.getValue()) {
                     return;

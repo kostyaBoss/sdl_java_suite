@@ -159,7 +159,7 @@ public class AudioStreamManager extends BaseAudioStreamManager {
 
     private final OnRPCNotificationListener hmiListener = new OnRPCNotificationListener() {
         @Override
-        public void onNotified(RPCNotification notification) {
+        public void onNotified(RPCNotification notification, String applicationId) {
             if(notification != null){
                 OnHMIStatus onHMIStatus = (OnHMIStatus)notification;
                 if (onHMIStatus.getWindowID() != null && onHMIStatus.getWindowID() != PredefinedWindows.DEFAULT_WINDOW.getValue()) {
