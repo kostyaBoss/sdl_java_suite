@@ -98,19 +98,22 @@ public abstract class BaseSdlService extends Service implements ISdlService{
 	}
 
 	private void processGlobalConstants() {
+		StringBuilder error = new StringBuilder();
 		if (serviceForegroundId == null) {
-			throw new RuntimeException("ApplicationId should not be null, please override method correctly");
+			error.append("ApplicationId should not be null, please override method correctly \n");
 		}
 		if (serviceName == null) {
-			throw new RuntimeException("ServiceName should not be null, please override method correctly");
+			error.append("ServiceName should not be null, please override method correctly \n");
 		}
 
 		if (serviceIcon == null) {
-			throw new RuntimeException("ServiceIcon should not be null, please override method correctly");
+			error.append("ServiceIcon should not be null, please override method correctly \n");
 		}
 
 		if (serviceTitle == null) {
-			throw new RuntimeException("ServiceTitle should not be null, please override method correctly");
+			error.append("ServiceTitle should not be null, please override method correctly");
 		}
+
+		throw new RuntimeException(error.toString());
 	}
 }

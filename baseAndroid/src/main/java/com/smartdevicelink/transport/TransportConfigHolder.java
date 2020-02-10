@@ -60,11 +60,7 @@ public class TransportConfigHolder {
                 transport = new MultiplexTransportConfig(context, applicationId, securityLevel);
                 break;
             case "TCP":
-                if (machineIP != null && !TextUtils.isEmpty(machineIP) && machinePort != null)
-                    transport = new TCPTransportConfig(machinePort, machineIP, true);
-                else
-                    throw new RuntimeException("Invalid configuration, IP and/or Port should not be null or empty");
-                break;
+                transport = new TCPTransportConfig(machinePort, machineIP, true);
             case "MULTI_HB":
                 MultiplexTransportConfig mtc = new MultiplexTransportConfig(
                         context,

@@ -1,5 +1,6 @@
 package com.sdl.hellosdlandroid;
 
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.smartdevicelink.components.BaseSdlService;
@@ -119,6 +120,9 @@ public class SdlService extends BaseSdlService {
 						return;
 					}
 					if (onHMIStatus.getHmiLevel() == HMILevel.HMI_FULL && onHMIStatus.getFirstRun()) {
+						if (applicationId == null || TextUtils.isEmpty(applicationId)) {
+							throw new AssertionError("ApplicationId can't be null or empty");
+						}
 						SdlManager manager = sdlManagerMap.get(Integer.parseInt(applicationId));
 						setVoiceCommands(manager);
 						sendMenus(manager);
