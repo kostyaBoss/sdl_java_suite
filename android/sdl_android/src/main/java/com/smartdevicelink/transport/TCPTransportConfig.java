@@ -31,8 +31,6 @@
  */
 package com.smartdevicelink.transport;
 
-import android.text.TextUtils;
-
 import com.smartdevicelink.transport.enums.TransportType;
 
 /**
@@ -63,14 +61,10 @@ public final class TCPTransportConfig extends BaseTransportConfig {
      * @param autoReconnect Flag which must be set to true if tcp connection must be automatically reestablished in
      *                      case of disconnection
 	 */
-    public TCPTransportConfig(Integer port, String ipAddress, boolean autoReconnect) {
-		if (ipAddress != null && !TextUtils.isEmpty(ipAddress) && port != null) {
-			mPort = port;
-			mIpAddress = ipAddress;
-			mAutoReconnect = autoReconnect;
-		} else {
-			throw new RuntimeException("Invalid configuration, IP and/or Port should not be null or empty");
-		}
+    public TCPTransportConfig(int port, String ipAddress, boolean autoReconnect) {
+		mPort = port;
+		mIpAddress = ipAddress;
+        mAutoReconnect = autoReconnect;
     }
 	
 	/**

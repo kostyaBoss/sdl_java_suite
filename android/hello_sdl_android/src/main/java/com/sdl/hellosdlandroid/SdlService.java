@@ -47,7 +47,7 @@ public class SdlService extends BaseSdlService {
 	private static final String APP_NAME 				= "Hello Sdl";
 	private static final String APP_NAME_ES 			= "Hola Sdl";
 	private static final String APP_NAME_FR 			= "Bonjour Sdl";
-	private static final Integer FIRST_APP_ID 			= 8678309;
+	private static final Integer FIRST_APP_ID 			= 8678311;
 	private static final Integer SECOND_APP_ID 			= 8678310;
 	private static final String SERVICE_NOTIFICATION_TITLE = "Connected through SDL";
 

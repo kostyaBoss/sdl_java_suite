@@ -93,7 +93,10 @@ public abstract class BaseSdlService extends Service implements ISdlService{
 		Log.d(TAG, "disposing managers");
 
 		for (int i = 0; i < sdlManagerMap.size(); i++) {
-			sdlManagerMap.get(i).dispose();
+			SdlManager manager = sdlManagerMap.get(i);
+			if (manager != null) {
+				manager.dispose();
+			}
 		}
 	}
 
@@ -114,6 +117,8 @@ public abstract class BaseSdlService extends Service implements ISdlService{
 			error.append("ServiceTitle should not be null, please override method correctly");
 		}
 
-		throw new RuntimeException(error.toString());
+		if (error.length() != 0) {
+			throw new RuntimeException(error.toString());
+		}
 	}
 }
