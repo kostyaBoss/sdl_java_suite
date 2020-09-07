@@ -1,6 +1,6 @@
 package com.smartdevicelink.proxy.rpc;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.smartdevicelink.protocol.enums.FunctionID;
 import com.smartdevicelink.proxy.RPCResponse;
@@ -31,8 +31,9 @@ public class GetInteriorVehicleDataConsentResponse extends RPCResponse {
      * Sets the list of allowances for this class
      * @param allowances the allowances to be set
      */
-    public void setAllowances(@NonNull List<Boolean> allowances) {
+    public GetInteriorVehicleDataConsentResponse setAllowances(@NonNull List<Boolean> allowances) {
         setParameters(KEY_ALLOWED, allowances);
+        return this;
     }
 
     /**

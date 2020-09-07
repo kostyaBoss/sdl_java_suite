@@ -31,7 +31,7 @@
  */
 package com.smartdevicelink.proxy.rpc;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.smartdevicelink.proxy.RPCStruct;
 
@@ -105,14 +105,16 @@ public class ScreenParams extends RPCStruct {
     public ImageResolution getImageResolution() {
         return (ImageResolution) getObject(ImageResolution.class, KEY_RESOLUTION);
     } 
-    public void setImageResolution( @NonNull ImageResolution resolution ) {
+    public ScreenParams setImageResolution(@NonNull ImageResolution resolution) {
         setValue(KEY_RESOLUTION, resolution);
+        return this;
     }
     @SuppressWarnings("unchecked")
     public TouchEventCapabilities getTouchEventAvailable() {
     	return (TouchEventCapabilities) getObject(TouchEventCapabilities.class, KEY_TOUCH_EVENT_AVAILABLE);
     } 
-    public void setTouchEventAvailable( TouchEventCapabilities touchEventAvailable ) {
-    	setValue(KEY_TOUCH_EVENT_AVAILABLE, touchEventAvailable);
-    }     
+    public ScreenParams setTouchEventAvailable( TouchEventCapabilities touchEventAvailable) {
+        setValue(KEY_TOUCH_EVENT_AVAILABLE, touchEventAvailable);
+        return this;
+    }
 }

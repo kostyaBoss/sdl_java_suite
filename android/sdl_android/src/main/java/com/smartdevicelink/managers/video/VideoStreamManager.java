@@ -36,24 +36,25 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.SystemClock;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.Display;
 import android.view.InputDevice;
 import android.view.MotionEvent;
 
+import androidx.annotation.RestrictTo;
+
 import com.smartdevicelink.SdlConnection.SdlSession;
 import com.smartdevicelink.encoder.VirtualDisplayEncoder;
-import com.smartdevicelink.haptic.HapticInterfaceManager;
 import com.smartdevicelink.managers.BaseSubManager;
 import com.smartdevicelink.managers.CompletionListener;
 import com.smartdevicelink.managers.StreamingStateMachine;
+import com.smartdevicelink.managers.lifecycle.OnSystemCapabilityListener;
+import com.smartdevicelink.protocol.ProtocolMessage;
 import com.smartdevicelink.protocol.enums.FunctionID;
 import com.smartdevicelink.protocol.enums.SessionType;
 import com.smartdevicelink.proxy.RPCNotification;
 import com.smartdevicelink.proxy.interfaces.ISdl;
 import com.smartdevicelink.proxy.interfaces.ISdlServiceListener;
 import com.smartdevicelink.proxy.interfaces.IVideoStreamListener;
-import com.smartdevicelink.proxy.interfaces.OnSystemCapabilityListener;
 import com.smartdevicelink.proxy.rpc.DisplayCapabilities;
 import com.smartdevicelink.proxy.rpc.ImageResolution;
 import com.smartdevicelink.proxy.rpc.OnHMIStatus;
@@ -61,17 +62,25 @@ import com.smartdevicelink.proxy.rpc.OnTouchEvent;
 import com.smartdevicelink.proxy.rpc.TouchCoord;
 import com.smartdevicelink.proxy.rpc.TouchEvent;
 import com.smartdevicelink.proxy.rpc.VideoStreamingCapability;
+import com.smartdevicelink.proxy.rpc.VideoStreamingFormat;
 import com.smartdevicelink.proxy.rpc.enums.HMILevel;
 import com.smartdevicelink.proxy.rpc.enums.PredefinedWindows;
 import com.smartdevicelink.proxy.rpc.enums.SystemCapabilityType;
 import com.smartdevicelink.proxy.rpc.enums.TouchType;
+import com.smartdevicelink.proxy.rpc.enums.VideoStreamingProtocol;
+import com.smartdevicelink.proxy.rpc.enums.VideoStreamingState;
 import com.smartdevicelink.proxy.rpc.listeners.OnRPCNotificationListener;
+import com.smartdevicelink.streaming.AbstractPacketizer;
+import com.smartdevicelink.streaming.IStreamListener;
+import com.smartdevicelink.streaming.StreamPacketizer;
+import com.smartdevicelink.streaming.video.RTPH264Packetizer;
 import com.smartdevicelink.streaming.video.SdlRemoteDisplay;
 import com.smartdevicelink.streaming.video.VideoStreamingParameters;
 import com.smartdevicelink.transport.utl.TransportRecord;
 import com.smartdevicelink.util.DebugTool;
 import com.smartdevicelink.util.Version;
 
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
@@ -89,12 +98,14 @@ public class VideoStreamManager extends BaseVideoStreamManager {
 	private float[] touchScalar = {1.0f,1.0f}; //x, y
 	private HapticInterfaceManager hapticManager;
 	private SdlMotionEvent sdlMotionEvent = null;
-	private HMILevel hmiLevel;
+	private OnHMIStatus currentOnHMIStatus;
 	private StreamingStateMachine stateMachine;
 	private VideoStreamingParameters parameters;
 	private IVideoStreamListener streamListener;
 	private boolean isTransportAvailable = false;
 	private boolean hasStarted;
+	private String vehicleMake = null;
+	private AbstractPacketizer videoPacketizer;
 
 	// INTERNAL INTERFACES
 
@@ -104,11 +115,11 @@ public class VideoStreamManager extends BaseVideoStreamManager {
 			if(SessionType.NAV.equals(type)){
 				if (session != null && session.getAcceptedVideoParams() != null) {
 					parameters = session.getAcceptedVideoParams();
-					VideoStreamManager.this.streamListener = session.startVideoStream();
+					VideoStreamManager.this.streamListener = startVideoStream(session.getAcceptedVideoParams(), session);
 				}
 
 				if (VideoStreamManager.this.streamListener == null) {
-					Log.e(TAG, "Error starting video stream");
+					DebugTool.logError(TAG, "Error starting video stream");
 					stateMachine.transitionToState(StreamingStateMachine.ERROR);
 					return;
 				}
@@ -125,6 +136,7 @@ public class VideoStreamManager extends BaseVideoStreamManager {
 		@Override
 		public void onServiceEnded(SdlSession session, SessionType type) {
 			if(SessionType.NAV.equals(type)){
+				stopVideoStream();
 				if(remoteDisplay!=null){
 					stopStreaming();
 				}
@@ -135,7 +147,8 @@ public class VideoStreamManager extends BaseVideoStreamManager {
 
 		@Override
 		public void onServiceError(SdlSession session, SessionType type, String reason) {
-			DebugTool.logError("Unable to start video service: " + reason);
+			DebugTool.logError(TAG, "Unable to start video service: " + reason);
+			stopVideoStream();
 			stateMachine.transitionToState(StreamingStateMachine.ERROR);
 			transitionToState(BaseSubManager.ERROR);
 		}
@@ -145,17 +158,18 @@ public class VideoStreamManager extends BaseVideoStreamManager {
 		@Override
 		public void onNotified(RPCNotification notification, String applicationId) {
 			if(notification != null){
-				OnHMIStatus onHMIStatus = (OnHMIStatus)notification;
+				OnHMIStatus onHMIStatus = (OnHMIStatus) notification;
 				if (onHMIStatus.getWindowID() != null && onHMIStatus.getWindowID() != PredefinedWindows.DEFAULT_WINDOW.getValue()) {
 					return;
 				}
-				HMILevel prevHMILevel = hmiLevel;
-				hmiLevel = onHMIStatus.getHmiLevel();
-				if(hmiLevel.equals(HMILevel.HMI_FULL)){
-					checkState();
+				OnHMIStatus prevOnHMIStatus = currentOnHMIStatus;
+				currentOnHMIStatus = onHMIStatus;
+				if (!HMILevel.HMI_NONE.equals(currentOnHMIStatus.getHmiLevel()) && VideoStreamManager.this.parameters == null) {
+					getVideoStreamingParams();
 				}
-				if (hasStarted && (prevHMILevel == HMILevel.HMI_FULL || prevHMILevel == HMILevel.HMI_LIMITED) && (hmiLevel == HMILevel.HMI_NONE || hmiLevel == HMILevel.HMI_BACKGROUND)){
-					internalInterface.stopVideoService();
+				checkState();
+				if (hasStarted && (isHMIStateVideoStreamCapable(prevOnHMIStatus)) && (!isHMIStateVideoStreamCapable(currentOnHMIStatus))) {
+					stopVideoStream();
 				}
 			}
 		}
@@ -176,12 +190,15 @@ public class VideoStreamManager extends BaseVideoStreamManager {
 	};
 
 	// MANAGER APIs
-
+	@RestrictTo(RestrictTo.Scope.LIBRARY)
 	public VideoStreamManager(ISdl internalInterface){
 		super(internalInterface);
 
+		if(internalInterface != null && internalInterface.getRegisterAppInterfaceResponse() != null &&
+				internalInterface.getRegisterAppInterfaceResponse().getVehicleType() != null) {
+			vehicleMake = internalInterface.getRegisterAppInterfaceResponse().getVehicleType().getMake();
+		}
 		virtualDisplayEncoder = new VirtualDisplayEncoder();
-		hmiLevel = HMILevel.HMI_NONE;
 
 		// Listen for video service events
 		internalInterface.addServiceListener(SessionType.NAV, serviceListener);
@@ -196,7 +213,6 @@ public class VideoStreamManager extends BaseVideoStreamManager {
 	@Override
 	public void start(CompletionListener listener) {
 		isTransportAvailable = internalInterface.isTransportForServiceAvailable(SessionType.NAV);
-		getVideoStreamingParams();
 		checkState();
 		super.start(listener);
 	}
@@ -204,12 +220,17 @@ public class VideoStreamManager extends BaseVideoStreamManager {
 	private synchronized void checkState(){
 		if(this.getState() == SETTING_UP
 				&& isTransportAvailable
-				&& hmiLevel != null
-				&& hmiLevel.equals(HMILevel.HMI_FULL)
+				&& isHMIStateVideoStreamCapable(currentOnHMIStatus)
 				&& parameters != null){
 			stateMachine.transitionToState(StreamingStateMachine.READY);
 			transitionToState(READY);
 		}
+	}
+
+	boolean isHMIStateVideoStreamCapable(OnHMIStatus onHMIStatus) {
+		HMILevel hmiLevel = (onHMIStatus != null && onHMIStatus.getHmiLevel() != null) ? onHMIStatus.getHmiLevel() : HMILevel.HMI_NONE;
+		VideoStreamingState videoStreamingState = (onHMIStatus != null && onHMIStatus.getVideoStreamingState() != null) ? onHMIStatus.getVideoStreamingState() : VideoStreamingState.STREAMABLE;
+		return (hmiLevel.equals(HMILevel.HMI_FULL) || hmiLevel.equals(HMILevel.HMI_LIMITED)) && videoStreamingState.equals(VideoStreamingState.STREAMABLE);
 	}
 
 	private void getVideoStreamingParams(){
@@ -218,7 +239,7 @@ public class VideoStreamManager extends BaseVideoStreamManager {
 				@Override
 				public void onCapabilityRetrieved(Object capability) {
 					VideoStreamingParameters params = new VideoStreamingParameters();
-					params.update((VideoStreamingCapability)capability);	//Streaming parameters are ready time to stream
+					params.update((VideoStreamingCapability)capability, vehicleMake);	//Streaming parameters are ready time to stream
 					VideoStreamManager.this.parameters = params;
 
 					checkState();
@@ -227,7 +248,7 @@ public class VideoStreamManager extends BaseVideoStreamManager {
 
 				@Override
 				public void onError(String info) {
-					Log.e(TAG, "Error retrieving video streaming capability: " + info);
+					DebugTool.logError(TAG, "Error retrieving video streaming capability: " + info);
 					stateMachine.transitionToState(StreamingStateMachine.ERROR);
 					transitionToState(ERROR);
 				}
@@ -260,7 +281,7 @@ public class VideoStreamManager extends BaseVideoStreamManager {
 		this.remoteDisplayClass = remoteDisplayClass;
 		int majorProtocolVersion = internalInterface.getProtocolVersion().getMajor();
 		if(majorProtocolVersion >= 5 && !internalInterface.isCapabilitySupported(SystemCapabilityType.VIDEO_STREAMING)){
-			Log.e(TAG, "Video streaming not supported on this module");
+			DebugTool.logError(TAG, "Video streaming not supported on this module");
 			stateMachine.transitionToState(StreamingStateMachine.ERROR);
 			return;
 		}
@@ -270,14 +291,14 @@ public class VideoStreamManager extends BaseVideoStreamManager {
 					@Override
 					public void onCapabilityRetrieved(Object capability) {
 						VideoStreamingParameters params = new VideoStreamingParameters();
-						params.update((VideoStreamingCapability)capability);	//Streaming parameters are ready time to stream
+						params.update((VideoStreamingCapability)capability, vehicleMake);	//Streaming parameters are ready time to stream
 						startStreaming(params, encrypted);
 					}
 
 					@Override
 					public void onError(String info) {
 						stateMachine.transitionToState(StreamingStateMachine.ERROR);
-						Log.e(TAG, "Error retrieving video streaming capability: " + info);
+						DebugTool.logError(TAG, "Error retrieving video streaming capability: " + info);
 					}
 				});
 			}else{
@@ -303,13 +324,12 @@ public class VideoStreamManager extends BaseVideoStreamManager {
 	 */
 	protected void startStreaming(VideoStreamingParameters parameters, boolean encrypted){
 		this.parameters = parameters;
-		if(hmiLevel != HMILevel.HMI_FULL){
-			Log.e(TAG, "Cannot start video service if HMILevel is not FULL.");
+		if (!isHMIStateVideoStreamCapable(currentOnHMIStatus)) {
+			DebugTool.logError(TAG, "Cannot start video service in the current HMI status");
 			return;
 		}
 		//Start the video service
 		this.internalInterface.startVideoService(parameters, encrypted);
-
 	}
 
 	/**
@@ -361,6 +381,7 @@ public class VideoStreamManager extends BaseVideoStreamManager {
 	 * Stops streaming, ends video streaming service and removes service listeners.
 	 */
 	@Override
+	@RestrictTo(RestrictTo.Scope.LIBRARY)
 	public void dispose(){
 		stopStreaming();
 
@@ -369,13 +390,13 @@ public class VideoStreamManager extends BaseVideoStreamManager {
 		parameters = null;
 		virtualDisplayEncoder = null;
 		if (internalInterface != null) {
-			internalInterface.stopVideoService();
 			// Remove listeners
 			internalInterface.removeServiceListener(SessionType.NAV, serviceListener);
 			internalInterface.removeOnRPCNotificationListener(FunctionID.ON_TOUCH_EVENT, touchListener);
 			internalInterface.removeOnRPCNotificationListener(FunctionID.ON_HMI_STATUS, hmiListener);
 		}
 
+		stopVideoStream();
 
 
 		stateMachine.transitionToState(StreamingStateMachine.NONE);
@@ -399,7 +420,7 @@ public class VideoStreamManager extends BaseVideoStreamManager {
 	 * @return boolean (true = yes, false = no)
 	 */
 	public boolean isStreaming(){
-		return (stateMachine.getState() == StreamingStateMachine.STARTED) && (hmiLevel == HMILevel.HMI_FULL);
+		return (stateMachine.getState() == StreamingStateMachine.STARTED) && (isHMIStateVideoStreamCapable(currentOnHMIStatus));
 	}
 
 	/**
@@ -407,7 +428,7 @@ public class VideoStreamManager extends BaseVideoStreamManager {
 	 * @return boolean (true = not paused, false = paused)
 	 */
 	public boolean isPaused(){
-		return (hasStarted && stateMachine.getState() == StreamingStateMachine.STOPPED) || (hmiLevel != HMILevel.HMI_FULL);
+		return (hasStarted && stateMachine.getState() == StreamingStateMachine.STOPPED) || (!isHMIStateVideoStreamCapable(currentOnHMIStatus));
 	}
 
 	/**
@@ -488,7 +509,7 @@ public class VideoStreamManager extends BaseVideoStreamManager {
 
 			showPresentation.start();
 		} catch (Exception ex) {
-			Log.e(TAG, "Unable to create Virtual Display.");
+			DebugTool.logError(TAG, "Unable to create Virtual Display.");
 			if(DebugTool.isDebugEnabled()){
 				ex.printStackTrace();
 			}
@@ -696,6 +717,59 @@ public class VideoStreamManager extends BaseVideoStreamManager {
 		void removePointerById(int id){
 			pointers.remove(getPointerById(id));
 		}
+	}
+
+	private VideoStreamingProtocol getAcceptedProtocol(VideoStreamingParameters params) {
+		if (params != null) {
+			VideoStreamingFormat format = params.getFormat();
+			if (format != null && format.getProtocol() != null) {
+				return format.getProtocol();
+			}
+		}
+		//Returns default protocol if none are found
+		return new VideoStreamingParameters().getFormat().getProtocol();
+
+	}
+
+	protected IVideoStreamListener startVideoStream(VideoStreamingParameters params, final SdlSession session) {
+		VideoStreamingProtocol protocol = getAcceptedProtocol(params);
+
+		IStreamListener iStreamListener = new IStreamListener() {
+			@Override
+			public void sendStreamPacket(ProtocolMessage pm) {
+				session.sendMessage(pm);
+			}
+		};
+
+		try {
+			switch (protocol) {
+				case RAW: {
+					videoPacketizer = new StreamPacketizer(iStreamListener, null, SessionType.NAV, (byte) session.getSessionId(), session);
+					videoPacketizer.start();
+					return (IVideoStreamListener) videoPacketizer;
+				}
+				case RTP: {
+					//FIXME why is this not an extension of StreamPacketizer?
+					videoPacketizer = new RTPH264Packetizer(iStreamListener, SessionType.NAV, (byte) session.getSessionId(), session);
+					videoPacketizer.start();
+					return (IVideoStreamListener) videoPacketizer;
+				}
+				default:
+					DebugTool.logError(TAG, "Protocol " + protocol + " is not supported.");
+					return null;
+			}
+		} catch (IOException e) {
+			return null;
+		}
+
+	}
+
+	protected boolean stopVideoStream() {
+		if (videoPacketizer != null) {
+			videoPacketizer.stop();
+			return true;
+		}
+		return false;
 	}
 
 }

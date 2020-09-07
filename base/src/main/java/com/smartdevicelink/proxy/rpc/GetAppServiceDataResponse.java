@@ -31,7 +31,7 @@
  */
 package com.smartdevicelink.proxy.rpc;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.smartdevicelink.protocol.enums.FunctionID;
 import com.smartdevicelink.proxy.RPCResponse;
@@ -67,9 +67,10 @@ public class GetAppServiceDataResponse extends RPCResponse {
 	/**
 	 * @param serviceData -
 	 */
-	public void setServiceData(AppServiceData serviceData){
-		setParameters(KEY_SERVICE_DATA, serviceData);
-	}
+	public GetAppServiceDataResponse setServiceData( AppServiceData serviceData) {
+        setParameters(KEY_SERVICE_DATA, serviceData);
+        return this;
+    }
 
 	/**
 	 * @return serviceData

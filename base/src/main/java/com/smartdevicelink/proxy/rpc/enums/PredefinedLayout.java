@@ -137,18 +137,24 @@ public enum PredefinedLayout {
 	 A layout with only a single large graphic
 	 */
 	LARGE_GRAPHIC_ONLY("LARGE_GRAPHIC_ONLY"),
+
+	/**
+	 * Custom root template allowing in-vehicle WebEngine applications with
+	 * appropriate permissions to show the application's own web view.
+	 */
+	WEB_VIEW("WEB_VIEW")
 	;
 
-	private final String INTERNAL_NAME;
+	private final String VALUE;
 
-	private PredefinedLayout(String internalName) {
-		this.INTERNAL_NAME = internalName;
+	private PredefinedLayout(String value) {
+		this.VALUE = value;
 	}
 	/**
 	 * Returns a String representing a PredefinedLayout
 	 */
 	public String toString() {
-		return this.INTERNAL_NAME;
+		return this.VALUE;
 	}
 
 	/**

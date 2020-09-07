@@ -31,7 +31,7 @@
  */
 package com.smartdevicelink.proxy.rpc;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.smartdevicelink.protocol.enums.FunctionID;
 import com.smartdevicelink.proxy.RPCResponse;
@@ -57,19 +57,6 @@ public class DiagnosticMessageResponse extends RPCResponse {
     public DiagnosticMessageResponse(Hashtable<String, Object> hash) {
         super(hash);
     }
-    /**
-     * Constructs a new DiagnosticMessageResponse object
-     * @param success whether the request is successfully processed
-     * @param resultCode whether the request is successfully processed
-     * @deprecated use {@link DiagnosticMessageResponse#DiagnosticMessageResponse(Boolean, Result)}
-     */
-    @Deprecated
-    public DiagnosticMessageResponse(@NonNull Boolean success, @NonNull Result resultCode, @NonNull List<Integer> messageDataResult) {
-        this();
-        setSuccess(success);
-        setResultCode(resultCode);
-        setMessageDataResult(messageDataResult);
-    }
 
     /**
      * Constructs a new DiagnosticMessageResponse object
@@ -87,8 +74,9 @@ public class DiagnosticMessageResponse extends RPCResponse {
         return (List<Integer>) getObject(Integer.class, KEY_MESSAGE_DATA_RESULT);
     }
     
-    public void setMessageDataResult(List<Integer> messageDataResult) {
+    public DiagnosticMessageResponse setMessageDataResult( List<Integer> messageDataResult) {
         setParameters(KEY_MESSAGE_DATA_RESULT, messageDataResult);
+        return this;
     }
 
 

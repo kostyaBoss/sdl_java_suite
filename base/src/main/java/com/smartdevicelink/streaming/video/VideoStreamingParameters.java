@@ -32,6 +32,8 @@
 
 package com.smartdevicelink.streaming.video;
 
+import androidx.annotation.RestrictTo;
+
 import com.smartdevicelink.proxy.rpc.ImageResolution;
 import com.smartdevicelink.proxy.rpc.VideoStreamingCapability;
 import com.smartdevicelink.proxy.rpc.VideoStreamingFormat;
@@ -42,7 +44,9 @@ import com.smartdevicelink.util.DebugTool;
 import java.util.List;
 
 @SuppressWarnings("FieldCanBeLocal")
+@RestrictTo(RestrictTo.Scope.LIBRARY)
 public class VideoStreamingParameters {
+    private static final String TAG = "VideoStreamingParameters";
 	private final VideoStreamingProtocol DEFAULT_PROTOCOL = VideoStreamingProtocol.RAW;
 	private final VideoStreamingCodec DEFAULT_CODEC = VideoStreamingCodec.H264;
 	private final VideoStreamingFormat[] CURRENTLY_SUPPORTED_FORMATS = { new VideoStreamingFormat(VideoStreamingProtocol.RTP, VideoStreamingCodec.H264),
@@ -131,15 +135,22 @@ public class VideoStreamingParameters {
      * Update the values contained in the capability that should have been returned through the SystemCapabilityManager.
      * This update will use the most preferred streaming format from the module.
      * @param capability the video streaming capability returned from the SystemCapabilityManager
+     * @param vehicleMake the vehicle make from the RegisterAppInterfaceResponse
      * @see com.smartdevicelink.proxy.SystemCapabilityManager
      * @see VideoStreamingCapability
      */
-    public void update(VideoStreamingCapability capability){
+    public void update(VideoStreamingCapability capability, String vehicleMake){
         if(capability.getMaxBitrate()!=null){ this.bitrate = capability.getMaxBitrate() * 1000; } // NOTE: the unit of maxBitrate in getSystemCapability is kbps.
         double scale = DEFAULT_SCALE;
         if(capability.getScale() != null) { scale = capability.getScale(); }
         ImageResolution resolution = capability.getPreferredResolution();
         if(resolution!=null){
+
+            if (vehicleMake != null) {
+                if ((vehicleMake.contains("Ford") || vehicleMake.contains("Lincoln")) && ((resolution.getResolutionHeight() != null && resolution.getResolutionHeight() > 800) || (resolution.getResolutionWidth() != null && resolution.getResolutionWidth() > 800))) {
+                    scale = 1.0 / 0.75;
+                }
+            }
 
             if(resolution.getResolutionHeight()!=null && resolution.getResolutionHeight() > 0){ this.resolution.setResolutionHeight((int)(resolution.getResolutionHeight() / scale)); }
             if(resolution.getResolutionWidth()!=null && resolution.getResolutionWidth() > 0){ this.resolution.setResolutionWidth((int)(resolution.getResolutionWidth() / scale)); }
@@ -156,7 +167,7 @@ public class VideoStreamingParameters {
                     }
                 }
             }
-            DebugTool.logWarning("The VideoStreamingFormat has not been updated because none of the provided formats are supported.");
+            DebugTool.logWarning(TAG, "The VideoStreamingFormat has not been updated because none of the provided formats are supported.");
 
             //TODO In the future we should set format to null, but might be a breaking change
             // For now, format will remain whatever was set prior to this update

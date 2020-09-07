@@ -31,13 +31,13 @@
  */
 package com.smartdevicelink.managers.screen;
 
-import android.support.annotation.NonNull;
-import android.util.Log;
+import androidx.annotation.NonNull;
 
 import com.smartdevicelink.managers.file.filetypes.SdlArtwork;
 import com.smartdevicelink.proxy.rpc.SoftButton;
 import com.smartdevicelink.proxy.rpc.enums.SoftButtonType;
 import com.smartdevicelink.proxy.rpc.enums.SystemAction;
+import com.smartdevicelink.util.DebugTool;
 
 /**
  * <strong>SoftButtonState</strong> <br>
@@ -47,7 +47,6 @@ import com.smartdevicelink.proxy.rpc.enums.SystemAction;
  * @see SoftButtonObject
  */
 public class SoftButtonState {
-
     private static final String TAG = "SoftButtonState";
     private String name;
     private SdlArtwork artwork;
@@ -62,7 +61,7 @@ public class SoftButtonState {
      */
     public SoftButtonState(@NonNull String name, String text, SdlArtwork artwork) {
         if (text == null && artwork == null) {
-            Log.e(TAG, "Attempted to create an invalid soft button state: text and artwork are both null");
+            DebugTool.logError(TAG, "Attempted to create an invalid soft button state: text and artwork are both null");
             softButton = null;
             return;
         }
@@ -84,13 +83,15 @@ public class SoftButtonState {
 
         // Set the SoftButton's image
         if (artwork != null) {
-            softButton.setImage(artwork.getImageRPC());
+            this.softButton.setImage(artwork.getImageRPC());
         }
 
         // Set the SoftButton's text
         if (text != null) {
-            softButton.setText(text);
+            this.softButton.setText(text);
         }
+
+        this.softButton.setSystemAction(SystemAction.DEFAULT_ACTION);
     }
 
     /**
@@ -157,5 +158,33 @@ public class SoftButtonState {
      */
     public SdlArtwork getArtwork() {
         return artwork;
+    }
+
+    /**
+     * Used to compile hashcode for SoftButtonState for use to compare in equals method
+     * @return Custom hashcode of SoftButtonState variables
+     */
+    @Override
+    public int hashCode() {
+        int result = 1;
+        result += ((getName() == null) ? 0 : Integer.rotateLeft(getName().hashCode(), 1));
+        result += ((getArtwork() == null) ? 0 : Integer.rotateLeft(getArtwork().hashCode(),2));
+        return result;
+    }
+
+    /**
+     * Uses our custom hashCode for SoftButtonState objects
+     * @param o - The object to compare
+     * @return boolean of whether the objects are the same or not
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) return false;
+        // if this is the same memory address, it's the same
+        if (this == o) return true;
+        // if this is not an instance of SoftButtonState, not the same
+        if (!(o instanceof SoftButtonState)) return false;
+        // return comparison
+        return hashCode() == o.hashCode();
     }
 }

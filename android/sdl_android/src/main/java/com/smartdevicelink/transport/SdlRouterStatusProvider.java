@@ -42,9 +42,9 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
-import android.util.Log;
 
 import com.smartdevicelink.util.AndroidTools;
+import com.smartdevicelink.util.DebugTool;
 
 import java.lang.ref.WeakReference;
 
@@ -66,7 +66,7 @@ public class SdlRouterStatusProvider {
 	private ServiceConnection routerConnection= new ServiceConnection() {
 
 		public void onServiceConnected(ComponentName className, IBinder service) {
-			Log.d(TAG, "Bound to service " + className.toString());
+			DebugTool.logInfo(TAG, "Bound to service " + className.toString());
 			routerServiceMessenger = new Messenger(service);
 			isBound = true;
 			//So we just established our connection
@@ -86,7 +86,7 @@ public class SdlRouterStatusProvider {
 		}
 
 		public void onServiceDisconnected(ComponentName className) {
-			Log.d(TAG, "UN-Bound from service " + className.getClassName());
+			DebugTool.logInfo(TAG, "UN-Bound from service " + className.getClassName());
 			routerServiceMessenger = null;
 			isBound = false;
 		}
@@ -133,19 +133,20 @@ public class SdlRouterStatusProvider {
 			context.startService(bindingIntent);
 		}else {
 			bindingIntent.putExtra(FOREGROUND_EXTRA, true);
+			SdlBroadcastReceiver.setForegroundExceptionHandler(); //Prevent ANR in case the OS takes too long to start the service
 			context.startForegroundService(bindingIntent);
 
 		}
 		bindingIntent.setAction( TransportConstants.BIND_REQUEST_TYPE_STATUS);
 		return context.bindService(bindingIntent, routerConnection, Context.BIND_AUTO_CREATE);
 	}
-	
+
 	private void unBindFromService(){
 		try{
 			if(context!=null && routerConnection!=null){
 				context.unbindService(routerConnection);
 			}else{
-				Log.w(TAG, "Unable to unbind from router service, context was null");
+				DebugTool.logWarning(TAG, "Unable to unbind from router service, context was null");
 			}
 			
 		}catch(IllegalArgumentException e){

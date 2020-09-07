@@ -31,7 +31,7 @@
  */
 package com.smartdevicelink.proxy.rpc;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.smartdevicelink.protocol.enums.FunctionID;
 import com.smartdevicelink.proxy.RPCRequest;
@@ -118,31 +118,35 @@ public class SystemRequest extends RPCRequest {
         return (List<String>) getObject(String.class, KEY_DATA);
     }
  
-    public void setLegacyData( List<String> data ) {
+    public SystemRequest setLegacyData( List<String> data) {
         setParameters(KEY_DATA, data);
-    }    
+        return this;
+    }
             
     public String getFileName() {
         return getString(KEY_FILE_NAME);
     }
     
-    public void setFileName(String fileName) {
+    public SystemRequest setFileName( String fileName) {
         setParameters(KEY_FILE_NAME, fileName);
-    }    
+        return this;
+    }
 
     public RequestType getRequestType() {
         return (RequestType) getObject(RequestType.class, KEY_REQUEST_TYPE);
     }
 
-    public void setRequestType(@NonNull RequestType requestType) {
+    public SystemRequest setRequestType(@NonNull RequestType requestType) {
         setParameters(KEY_REQUEST_TYPE, requestType);
+        return this;
     }
 
     public String getRequestSubType() {
         return getString(KEY_REQUEST_SUB_TYPE);
     }
 
-    public void setRequestSubType(String requestSubType) {
+    public SystemRequest setRequestSubType( String requestSubType) {
         setParameters(KEY_REQUEST_SUB_TYPE, requestSubType);
+        return this;
     }
 }

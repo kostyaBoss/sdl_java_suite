@@ -31,7 +31,7 @@
  */
 package com.smartdevicelink.proxy.rpc;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.smartdevicelink.protocol.enums.FunctionID;
 import com.smartdevicelink.proxy.RPCResponse;
@@ -62,21 +62,6 @@ public class GetDTCsResponse extends RPCResponse{
      * Constructs a new GetDTCsResponse object
      * @param success whether the request is successfully processed
      * @param resultCode whether the request is successfully processed
-     * @param ecuHeader representation of the ecu header that was returned from the GetDTC request
-     * @deprecated use {@link GetDTCsResponse#GetDTCsResponse(Boolean, Result)}
-     */
-    @Deprecated
-    public GetDTCsResponse(@NonNull Boolean success, @NonNull Result resultCode, @NonNull Integer ecuHeader) {
-        this();
-        setSuccess(success);
-        setResultCode(resultCode);
-        setEcuHeader(ecuHeader);
-    }
-
-    /**
-     * Constructs a new GetDTCsResponse object
-     * @param success whether the request is successfully processed
-     * @param resultCode whether the request is successfully processed
      */
     public GetDTCsResponse(@NonNull Boolean success, @NonNull Result resultCode) {
         this();
@@ -89,16 +74,18 @@ public class GetDTCsResponse extends RPCResponse{
         return (List<String>) getObject(String.class, KEY_DTC);
     }
 
-    public void setDtc(List<String> dtc){
+    public GetDTCsResponse setDtc( List<String> dtc) {
         setParameters(KEY_DTC, dtc);
+        return this;
     }
     
     public Integer getEcuHeader(){
         return getInteger(KEY_ECU_HEADER);
     }
     
-    public void setEcuHeader(Integer ecuHeader){
+    public GetDTCsResponse setEcuHeader( Integer ecuHeader) {
         setParameters(KEY_ECU_HEADER, ecuHeader);
+        return this;
     }
 
 }

@@ -31,10 +31,12 @@
  */
 package com.smartdevicelink.protocol;
 
-import android.util.Log;
+
+import androidx.annotation.RestrictTo;
 
 import com.smartdevicelink.util.BitConverter;
-
+import com.smartdevicelink.util.DebugTool;
+@RestrictTo(RestrictTo.Scope.LIBRARY)
 public class BinaryFrameHeader {
 	private static final String TAG = "BinaryFrameHeader";
 
@@ -76,7 +78,7 @@ public class BinaryFrameHeader {
 				msg.setBulkData(_bulkData);
 			}
 		} catch (OutOfMemoryError|ArrayIndexOutOfBoundsException e){
-			Log.e(TAG, "Unable to process data to form header");
+			DebugTool.logError(TAG, "Unable to process data to form header");
 			return null;
 		}
 		

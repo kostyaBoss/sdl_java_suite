@@ -50,10 +50,12 @@ public enum VehicleDataType {
     VEHICLEDATA_RPM,
     /**
      * Notifies FUELLEVELData may be subscribed
+     * until Smart Device Link 7.0
      */
     VEHICLEDATA_FUELLEVEL,
     /**
      * Notifies FUELLEVEL_STATEData may be subscribed
+     * until Smart Device Link 7.0
      */
     VEHICLEDATA_FUELLEVEL_STATE,
 /**
@@ -167,7 +169,24 @@ public enum VehicleDataType {
      * @since SmartDeviceLink 6.0
      */
     VEHICLEDATA_OEM_CUSTOM_DATA,
-    ;
+
+    /**
+     * @since SmartDeviceLink 7.0.0
+     */
+    VEHICLEDATA_HANDSOFFSTEERING,
+
+    /**
+     * @since SmartDeviceLink 7.0.0
+     */
+    VEHICLEDATA_STABILITYCONTROLSSTATUS,
+    /**
+     * @since SmartDeviceLink 7.0.0
+     */
+    VEHICLEDATA_WINDOWSTATUS,
+    /**
+     * @since SmartDeviceLink 7.0.0
+     */
+    VEHICLEDATA_GEARSTATUS;
 
      /**
      * Convert String to VehicleDataType

@@ -31,7 +31,7 @@
  */
 package com.smartdevicelink.proxy.rpc;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.smartdevicelink.proxy.RPCStruct;
 
@@ -101,16 +101,18 @@ public class TouchCoord extends RPCStruct {
 		setY(y);
 	}
     
-    public void setX(@NonNull Integer x) {
+    public TouchCoord setX(@NonNull Integer x) {
         setValue(KEY_X, x);
+        return this;
     }
     
     public Integer getX() {
         return getInteger(KEY_X);
     }
     
-    public void setY(@NonNull Integer y) {
+    public TouchCoord setY(@NonNull Integer y) {
         setValue(KEY_Y, y);
+        return this;
     }
     
     public Integer getY() {

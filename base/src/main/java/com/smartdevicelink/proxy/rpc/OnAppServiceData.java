@@ -31,7 +31,7 @@
  */
 package com.smartdevicelink.proxy.rpc;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.smartdevicelink.protocol.enums.FunctionID;
 import com.smartdevicelink.proxy.RPCNotification;
@@ -65,9 +65,10 @@ public class OnAppServiceData extends RPCNotification {
 	/**
 	 * @param serviceData -
 	 */
-	public void setServiceData(@NonNull AppServiceData serviceData){
-		setParameters(KEY_SERVICE_DATA, serviceData);
-	}
+	public OnAppServiceData setServiceData(@NonNull AppServiceData serviceData) {
+        setParameters(KEY_SERVICE_DATA, serviceData);
+        return this;
+    }
 
 	/**
 	 * @return serviceData

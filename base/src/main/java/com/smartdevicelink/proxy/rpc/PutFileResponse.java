@@ -31,7 +31,7 @@
  */
 package com.smartdevicelink.proxy.rpc;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.smartdevicelink.protocol.enums.FunctionID;
 import com.smartdevicelink.proxy.RPCResponse;
@@ -68,22 +68,6 @@ public class PutFileResponse extends RPCResponse {
     }
 
 	/**
-	 * @deprecated use {@link PutFileResponse#PutFileResponse(Boolean, Result)} <br>
-	 *
-	 * Constructs a new PutFileResponse object
-	 * @param success whether the request is successfully processed
-	 * @param resultCode whether the request is successfully processed
-	 * @param spaceAvailable the spaceAvailable on the head unit
-	 */
-	@Deprecated
-	public PutFileResponse(@NonNull Boolean success, @NonNull Result resultCode, @NonNull Integer spaceAvailable) {
-		this();
-		setSuccess(success);
-		setResultCode(resultCode);
-		setSpaceAvailable(spaceAvailable);
-	}
-
-	/**
 	 * Constructs a new PutFileResponse object
 	 * @param success whether the request is successfully processed
 	 * @param resultCode whether the request is successfully processed
@@ -113,8 +97,9 @@ public class PutFileResponse extends RPCResponse {
 		super.format(rpcVersion, formatParams);
 	}
 
-    public void setSpaceAvailable(Integer spaceAvailable) {
+    public PutFileResponse setSpaceAvailable( Integer spaceAvailable) {
         setParameters(KEY_SPACE_AVAILABLE, spaceAvailable);
+        return this;
     }
 
     public Integer getSpaceAvailable() {

@@ -34,7 +34,7 @@
 
 package com.smartdevicelink.proxy.rpc;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.smartdevicelink.protocol.enums.FunctionID;
 import com.smartdevicelink.proxy.RPCRequest;
@@ -91,8 +91,8 @@ public class CancelInteraction extends RPCRequest {
     // Custom Getters / Setters
 
     /**
-     * The ID of the type of interaction to dismiss.
-     * Only values 10 (PerformInteractionID), 12 (AlertID), 25 (ScrollableMessageID), and 26 (SliderID) are permitted.
+     * Gets the ID of the type of interaction the developer wants to dismiss.
+     * Only values 10 (PerformInteractionID), 12 (AlertID), 25 (ScrollableMessageID), 26 (SliderID), and 64 (SubtleAlertID) are permitted.
      * @return - the functionID
      */
     public Integer getInteractionFunctionID() {
@@ -100,12 +100,13 @@ public class CancelInteraction extends RPCRequest {
     }
 
     /**
-     * The ID of the type of interaction to dismiss.
-     * Only values 10 (PerformInteractionID), 12 (AlertID), 25 (ScrollableMessageID), and 26 (SliderID) are permitted.
+     * Sets the ID of the type of interaction the developer wants to dismiss.
+     * Only values 10 (PerformInteractionID), 12 (AlertID), 25 (ScrollableMessageID), 26 (SliderID), and 64 (SubtleAlertID) are permitted.
      * @param functionID - the functionID
      */
-    public void setInteractionFunctionID(@NonNull Integer functionID) {
+    public CancelInteraction setInteractionFunctionID(@NonNull Integer functionID) {
         setParameters(KEY_FUNCTION_ID, functionID);
+        return this;
     }
 
     /**
@@ -120,7 +121,8 @@ public class CancelInteraction extends RPCRequest {
      * The ID of the specific interaction to dismiss. If not set, the most recent of the RPC type set in functionID will be dismissed.
      * @param cancelID - the cancelID
      */
-    public void setCancelID(Integer cancelID) {
+    public CancelInteraction setCancelID( Integer cancelID) {
         setParameters(KEY_CANCEL_ID, cancelID);
+        return this;
     }
 }

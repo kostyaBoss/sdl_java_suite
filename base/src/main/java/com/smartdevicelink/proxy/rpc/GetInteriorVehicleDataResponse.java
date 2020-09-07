@@ -31,7 +31,7 @@
  */
 package com.smartdevicelink.proxy.rpc;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.smartdevicelink.protocol.enums.FunctionID;
 import com.smartdevicelink.proxy.RPCResponse;
@@ -64,21 +64,6 @@ public class GetInteriorVehicleDataResponse extends RPCResponse {
 
 	/**
 	 * Constructs a new GetInteriorVehicleDataResponse object
-	 * @param moduleData specific data for the module that was requested
-	 * @param resultCode whether the request is successfully processed
-	 * @param success whether the request is successfully processed
-	 * @deprecated use {@link GetInteriorVehicleDataResponse#GetInteriorVehicleDataResponse(Result, Boolean)}
-	 */
-	@Deprecated
-	public GetInteriorVehicleDataResponse(@NonNull ModuleData moduleData, @NonNull Result resultCode, @NonNull Boolean success) {
-		this();
-		setModuleData(moduleData);
-		setResultCode(resultCode);
-		setSuccess(success);
-	}
-
-	/**
-	 * Constructs a new GetInteriorVehicleDataResponse object
 	 * @param resultCode whether the request is successfully processed
 	 * @param success whether the request is successfully processed
 	 */
@@ -102,9 +87,10 @@ public class GetInteriorVehicleDataResponse extends RPCResponse {
 	 *
 	 * @param moduleData specific data for the module that was requested
 	 */
-	public void setModuleData(ModuleData moduleData) {
-		setParameters(KEY_MODULE_DATA, moduleData);
-	}
+	public GetInteriorVehicleDataResponse setModuleData( ModuleData moduleData) {
+        setParameters(KEY_MODULE_DATA, moduleData);
+        return this;
+    }
 
 	/**
 	 * Sets isSubscribed parameter
@@ -114,9 +100,10 @@ public class GetInteriorVehicleDataResponse extends RPCResponse {
 	 * If "true" - the "moduleType" from request is successfully subscribed and the head unit will send onInteriorVehicleData notifications for the moduleType.
 	 * If "false" - the "moduleType" from request is either unsubscribed or failed to subscribe.
 	 * */
-	public void setIsSubscribed(Boolean isSubscribed) {
-		setParameters(KEY_IS_SUBSCRIBED, isSubscribed);
-	}
+	public GetInteriorVehicleDataResponse setIsSubscribed( Boolean isSubscribed) {
+        setParameters(KEY_IS_SUBSCRIBED, isSubscribed);
+        return this;
+    }
 
 	/**
 	 * Gets isSubscribed parameter

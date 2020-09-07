@@ -1,6 +1,6 @@
 package com.smartdevicelink.test.transport;
 
-import com.smartdevicelink.test.Test;
+import com.smartdevicelink.test.TestValues;
 import com.smartdevicelink.transport.BaseTransportConfig;
 import com.smartdevicelink.transport.enums.TransportType;
 
@@ -15,7 +15,6 @@ public class BaseTransportConfigTests extends TestCase {
 	/**
 	 * This is a unit test for the following methods : 
 	 * {@link com.smartdevicelink.transport.BaseTransportConfig#getTransportType()}
-	 * {@link com.smartdevicelink.transport.BaseTransportConfig#shareConnection()}
 	 * {@link com.smartdevicelink.transport.BaseTransportConfig#getHeartBeatTimeout()}
 	 * {@link com.smartdevicelink.transport.BaseTransportConfig#setHeartBeatTimeout(int)}
 	 */
@@ -27,16 +26,14 @@ public class BaseTransportConfigTests extends TestCase {
 		
 		// Comparison Values
 		int     expectedMaxValue      = Integer.MAX_VALUE;
-		boolean actualShareConnection = testBaseTransportConfig.shareConnection();
 		int     actualMaxValue        = testBaseTransportConfig.getHeartBeatTimeout();
 		
 		// Valid Tests
-		assertNotNull(Test.NOT_NULL, testBaseTransportConfig);		
-		assertEquals(Test.MATCH, expectedMaxValue, actualMaxValue);
-		assertTrue(Test.TRUE, actualShareConnection);
-		
+		assertNotNull(TestValues.NOT_NULL, testBaseTransportConfig);
+		assertEquals(TestValues.MATCH, expectedMaxValue, actualMaxValue);
+
 		testBaseTransportConfig.setHeartBeatTimeout(testInt);
-		assertEquals(Test.MATCH, testInt, testBaseTransportConfig.getHeartBeatTimeout());		
+		assertEquals(TestValues.MATCH, testInt, testBaseTransportConfig.getHeartBeatTimeout());
 	}
 }
 

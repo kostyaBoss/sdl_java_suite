@@ -31,7 +31,7 @@
  */
 package com.smartdevicelink.proxy.rpc;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.smartdevicelink.protocol.enums.FunctionID;
 import com.smartdevicelink.proxy.RPCResponse;
@@ -64,8 +64,9 @@ public class ReadDIDResponse extends RPCResponse {
         setSuccess(success);
         setResultCode(resultCode);
     }
-    public void setDidResult(List<DIDResult> didResult) {
-		setParameters(KEY_DID_RESULT, didResult);
+    public ReadDIDResponse setDidResult( List<DIDResult> didResult) {
+        setParameters(KEY_DID_RESULT, didResult);
+        return this;
     }
     @SuppressWarnings("unchecked")
     public List<DIDResult> getDidResult() {

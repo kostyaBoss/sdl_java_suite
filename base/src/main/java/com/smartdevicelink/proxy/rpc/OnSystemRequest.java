@@ -31,8 +31,7 @@
  */
 package com.smartdevicelink.proxy.rpc;
 
-import android.support.annotation.NonNull;
-import android.util.Log;
+import androidx.annotation.NonNull;
 
 import com.smartdevicelink.marshal.JsonRPCMarshaller;
 import com.smartdevicelink.protocol.enums.FunctionID;
@@ -40,6 +39,7 @@ import com.smartdevicelink.proxy.RPCNotification;
 import com.smartdevicelink.proxy.RPCStruct;
 import com.smartdevicelink.proxy.rpc.enums.FileType;
 import com.smartdevicelink.proxy.rpc.enums.RequestType;
+import com.smartdevicelink.util.DebugTool;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -82,7 +82,7 @@ import java.util.List;
  * 			<td>Array of Strings</td>
  * 			<td>Optional URL for HTTP requests.If blank, the binary data shall be forwarded to the app.If not blank, the binary data shall be forwarded to the url with a provided timeout in seconds.</td>
  *                 <td>N</td>
- *                 <td>maxlength: 1000; minsize:1;  maxsize: 100</td>
+ *                 <td>minsize:1;</td>
  * 			<td>SmartDeviceLink 2.3.2 </td>
  * 		</tr>
  * 		<tr>
@@ -121,6 +121,7 @@ import java.util.List;
  * @since SmartDeviceLink 2.3.2
  */
 public class OnSystemRequest extends RPCNotification {
+    private static final String TAG = "OnSystemRequest";
 	public static final String KEY_URL_V1 = "URL";
     public static final String KEY_URL = "url";
 	public static final String KEY_TIMEOUT_V1 = "Timeout";
@@ -177,10 +178,10 @@ public class OnSystemRequest extends RPCNotification {
             	tempBody = getBody(httpJson);
             	tempHeaders = getHeaders(httpJson);
         	}catch(JSONException e){
-            	Log.e("OnSystemRequest", "HTTPRequest in bulk data was malformed.");
+                DebugTool.logError(TAG, "HTTPRequest in bulk data was malformed.");
             	e.printStackTrace();
         	}catch(NullPointerException e){
-            	Log.e("OnSystemRequest", "Invalid HTTPRequest object in bulk data.");
+                DebugTool.logError(TAG, "Invalid HTTPRequest object in bulk data.");
             	e.printStackTrace();
         	}
         }else if(RequestType.HTTP.equals(this.getRequestType())){
@@ -205,9 +206,9 @@ public class OnSystemRequest extends RPCNotification {
         String result = null;
         
         try{
-            result = httpJson.getString("body");
+            result = httpJson.getString(KEY_BODY);
         }catch(JSONException e){
-            Log.e("OnSystemRequest", "\"body\" key doesn't exist in bulk data.");
+            DebugTool.logError(TAG, KEY_BODY + " key doesn't exist in bulk data.");
             e.printStackTrace();
         }
         
@@ -218,31 +219,22 @@ public class OnSystemRequest extends RPCNotification {
         Headers result = null;
         
         try{
-            JSONObject httpHeadersJson = httpJson.getJSONObject("headers");
+            JSONObject httpHeadersJson = httpJson.getJSONObject(KEY_HEADERS);
             Hashtable<String, Object> httpHeadersHash = JsonRPCMarshaller.deserializeJSONObject(httpHeadersJson);
             result = new Headers(httpHeadersHash);
         }catch(JSONException e){
-            Log.e("OnSystemRequest", "\"headers\" key doesn't exist in bulk data.");
+            DebugTool.logError(TAG, KEY_HEADERS + " key doesn't exist in bulk data.");
             e.printStackTrace();
         }
         
         return result;
     }
     
-    @Deprecated
-    public void setBinData(byte[] aptData) {
-        setBulkData(aptData);
-    }
-    
-    @Deprecated
-    public byte[] getBinData() {
-        return getBulkData();
-    }
-    
     @Override
-    public void setBulkData(byte[] bulkData){
+    public OnSystemRequest setBulkData(byte[] bulkData){
         super.setBulkData(bulkData);
         handleBulkData(bulkData);
+        return this;
     }
     
     
@@ -255,12 +247,14 @@ public class OnSystemRequest extends RPCNotification {
         return this.body;
     }
     
-    public void setBody(String body) {
+    public OnSystemRequest setBody( String body) {
         this.body = body;
+        return this;
     }
     
-    public void setHeaders(Headers header) {
+    public OnSystemRequest setHeaders( Headers header) {
         this.headers = header;
+        return this;
     }
 
     public Headers getHeader() {
@@ -271,16 +265,18 @@ public class OnSystemRequest extends RPCNotification {
         return (RequestType) getObject(RequestType.class, KEY_REQUEST_TYPE);
     }
 
-    public void setRequestType(@NonNull RequestType requestType) {
+    public OnSystemRequest setRequestType(@NonNull RequestType requestType) {
         setParameters(KEY_REQUEST_TYPE, requestType);
+        return this;
     }
 
     public String getRequestSubType() {
         return getString(KEY_REQUEST_SUB_TYPE);
     }
 
-    public void setRequestSubType(String requestSubType) {
+    public OnSystemRequest setRequestSubType( String requestSubType) {
         setParameters(KEY_REQUEST_SUB_TYPE, requestSubType);
+        return this;
     }
 
     public String getUrl() {
@@ -299,28 +295,31 @@ public class OnSystemRequest extends RPCNotification {
         return null;
     }
 
-    public void setUrl(String url) {
+    public OnSystemRequest setUrl( String url) {
         setParameters(KEY_URL, url);
+        return this;
     }
 
     public FileType getFileType() {
         return (FileType) getObject(FileType.class, KEY_FILE_TYPE);
     }
 
-    public void setFileType(FileType fileType) {
+    public OnSystemRequest setFileType( FileType fileType) {
         setParameters(KEY_FILE_TYPE, fileType);
+        return this;
     }
 
     /**
      * @deprecated as of SmartDeviceLink 4.0
      * @param offset  of the data attached
      */
-    public void setOffset(Integer offset) {
-    	if(offset == null){
+    public OnSystemRequest setOffset( Integer offset) {
+        if(offset == null){
     		setOffset((Long)null);
     	}else{
     		setOffset(offset.longValue());
     	}
+        return this;
     }
     
     public Long getOffset() {
@@ -338,8 +337,9 @@ public class OnSystemRequest extends RPCNotification {
         return null;
     }
 
-    public void setOffset(Long offset) {
+    public OnSystemRequest setOffset( Long offset) {
         setParameters(KEY_OFFSET, offset);
+        return this;
     }
     
     public Integer getTimeout() {
@@ -356,9 +356,10 @@ public class OnSystemRequest extends RPCNotification {
         return null;
     }
 
-    public void setTimeout(Integer timeout) {
+    public OnSystemRequest setTimeout( Integer timeout) {
         setParameters(KEY_TIMEOUT, timeout);
-    }    
+        return this;
+    }
     
     public Long getLength() {
         final Object o = getParameters(KEY_LENGTH);
@@ -378,15 +379,17 @@ public class OnSystemRequest extends RPCNotification {
      * @deprecated as of SmartDeviceLink 4.0
      * @param length of the data attached
      */
-    public void setLength(Integer length) {
-    	if(length == null){
+    public OnSystemRequest setLength( Integer length) {
+        if(length == null){
     		setLength((Long)null);
     	}else{
     		setLength(length.longValue());
     	}
+        return this;
     }
     
-    public void setLength(Long length) {
+    public OnSystemRequest setLength( Long length) {
         setParameters(KEY_LENGTH, length);
+        return this;
     }
 }

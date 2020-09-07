@@ -32,7 +32,7 @@
 
 package com.smartdevicelink.managers.screen.menu;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.smartdevicelink.managers.BaseSubManager;
 import com.smartdevicelink.managers.CompletionListener;
@@ -46,7 +46,6 @@ import com.smartdevicelink.proxy.rpc.OnCommand;
 import com.smartdevicelink.proxy.rpc.OnHMIStatus;
 import com.smartdevicelink.proxy.rpc.enums.HMILevel;
 import com.smartdevicelink.proxy.rpc.enums.PredefinedWindows;
-import com.smartdevicelink.proxy.rpc.enums.Result;
 import com.smartdevicelink.proxy.rpc.listeners.OnMultipleRequestListener;
 import com.smartdevicelink.proxy.rpc.listeners.OnRPCNotificationListener;
 import com.smartdevicelink.util.DebugTool;
@@ -55,9 +54,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 abstract class BaseVoiceCommandManager extends BaseSubManager {
-
-	List<VoiceCommand> voiceCommands;
-	List<VoiceCommand> oldVoiceCommands;
+	private static final String TAG = "BaseVoiceCommandManager";
+	List<VoiceCommand> voiceCommands, oldVoiceCommands;
 
 	List<AddCommand> inProgressUpdate;
 
@@ -112,7 +110,7 @@ abstract class BaseVoiceCommandManager extends BaseSubManager {
 
 		// we actually need voice commands to set.
 		if (voiceCommands == null || voiceCommands.size() == 0){
-			DebugTool.logInfo("Trying to set empty list of voice commands, returning");
+			DebugTool.logInfo(TAG, "Trying to set empty list of voice commands, returning");
 			return;
 		}
 
@@ -127,7 +125,10 @@ abstract class BaseVoiceCommandManager extends BaseSubManager {
 		waitingOnHMIUpdate = false;
 		lastVoiceCommandId = voiceCommandIdMin;
 		updateIdsOnVoiceCommands(voiceCommands);
-		oldVoiceCommands = new ArrayList<>(voiceCommands);
+		this.oldVoiceCommands = new ArrayList<>();
+		if (this.voiceCommands != null && !this.voiceCommands.isEmpty()) {
+			this.oldVoiceCommands.addAll(this.voiceCommands);
+		}
 		this.voiceCommands = new ArrayList<>(voiceCommands);
 
 		update();
@@ -167,7 +168,7 @@ abstract class BaseVoiceCommandManager extends BaseSubManager {
 						}
 
 						if (!success2){
-							DebugTool.logError("Error sending voice commands");
+							DebugTool.logError(TAG, "Error sending voice commands");
 						}
 					}
 				});
@@ -197,15 +198,10 @@ abstract class BaseVoiceCommandManager extends BaseSubManager {
 
 			@Override
 			public void onFinished() {
-				DebugTool.logInfo("Successfully deleted old voice commands");
+				DebugTool.logInfo(TAG, "Successfully deleted old voice commands");
 				if (listener != null){
 					listener.onComplete(true);
 				}
-			}
-
-			@Override
-			public void onError(int correlationId, Result resultCode, String info) {
-
 			}
 
 			@Override
@@ -235,16 +231,11 @@ abstract class BaseVoiceCommandManager extends BaseSubManager {
 
 			@Override
 			public void onFinished() {
-				DebugTool.logInfo("Sending Voice Commands Complete");
+				DebugTool.logInfo(TAG, "Sending Voice Commands Complete");
 				if (listener != null){
 					listener.onComplete(true);
 				}
 				oldVoiceCommands = voiceCommands;
-			}
-
-			@Override
-			public void onError(int correlationId, Result resultCode, String info) {
-
 			}
 
 			@Override

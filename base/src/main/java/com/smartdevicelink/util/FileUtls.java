@@ -31,7 +31,7 @@
  */
 package com.smartdevicelink.util;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -42,7 +42,7 @@ import java.net.URLConnection;
 import java.nio.file.Files;
 
 public class FileUtls {
-
+    private static final String TAG = "FileUtls";
 
     /**
      * When using on Android, this method should only be used for Android Oreo and newer
@@ -94,7 +94,7 @@ public class FileUtls {
             }
             return buffer.toByteArray();
         }catch (Exception e){
-            DebugTool.logError("Unable to download file - " + urlStr, e);
+            DebugTool.logError(TAG, "Unable to download file - " + urlStr, e);
             return null;
         }
     }

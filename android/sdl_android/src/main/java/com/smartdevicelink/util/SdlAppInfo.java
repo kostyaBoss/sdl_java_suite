@@ -35,9 +35,7 @@ package com.smartdevicelink.util;
 import android.content.ComponentName;
 import android.content.pm.PackageInfo;
 import android.content.pm.ResolveInfo;
-import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 
 import java.util.Comparator;
 
@@ -77,11 +75,11 @@ public class SdlAppInfo {
                     this.isCustomRouterService = metadata.getBoolean(SDL_CUSTOM_ROUTER_METADATA);
                 }
             } else {
-                Log.w(TAG, packageName + " has not supplied metadata with their router service!");
+                DebugTool.logWarning(TAG, packageName + " has not supplied metadata with their router service!");
             }
         }
 
-        if(packageInfo != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD){
+        if(packageInfo != null){
             this.lastUpdateTime = packageInfo.lastUpdateTime;
             if(this.lastUpdateTime <= 0){
                 this.lastUpdateTime = packageInfo.firstInstallTime;

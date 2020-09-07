@@ -31,7 +31,7 @@
  */
 package com.smartdevicelink.proxy.rpc;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.smartdevicelink.protocol.enums.FunctionID;
 import com.smartdevicelink.proxy.RPCResponse;
@@ -70,9 +70,10 @@ public class PerformAppServiceInteractionResponse extends RPCResponse {
 	 * The service can provide specific result strings to the consumer through this param.
 	 * @param serviceSpecificResult -
 	 */
-	public void setServiceSpecificResult(String serviceSpecificResult){
-		setParameters(KEY_SERVICE_SPECIFIC_RESULT, serviceSpecificResult);
-	}
+	public PerformAppServiceInteractionResponse setServiceSpecificResult( String serviceSpecificResult) {
+        setParameters(KEY_SERVICE_SPECIFIC_RESULT, serviceSpecificResult);
+        return this;
+    }
 
 	/**
 	 * The service can provide specific result strings to the consumer through this param.

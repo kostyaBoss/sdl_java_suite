@@ -31,7 +31,7 @@
  */
 package com.smartdevicelink.proxy.rpc;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.smartdevicelink.protocol.enums.FunctionID;
 import com.smartdevicelink.proxy.RPCResponse;
@@ -62,8 +62,9 @@ public class GetCloudAppPropertiesResponse extends RPCResponse {
         setResultCode(resultCode);
     }
 
-    public void setCloudAppProperties(CloudAppProperties cloudAppProperties){
+    public GetCloudAppPropertiesResponse setCloudAppProperties( CloudAppProperties cloudAppProperties) {
         setParameters(KEY_PROPERTIES, cloudAppProperties);
+        return this;
     }
 
     public CloudAppProperties getCloudAppProperties(){

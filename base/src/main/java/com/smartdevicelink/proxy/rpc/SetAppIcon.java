@@ -31,7 +31,7 @@
  */
 package com.smartdevicelink.proxy.rpc;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.smartdevicelink.protocol.enums.FunctionID;
 import com.smartdevicelink.proxy.RPCRequest;
@@ -109,14 +109,15 @@ public class SetAppIcon extends RPCRequest {
 
 	/**
 	 * Sets a file reference name
-	 * 
+	 *
 	 * @param sdlFileName
 	 *            a String value representing a file reference name
 	 *            <p></p>
 	 *            <b>Notes: </b>Maxlength=500, however the max file name length may vary based on remote filesystem limitations
 	 */
-    public void setSdlFileName(@NonNull String sdlFileName) {
-		setParameters(KEY_SDL_FILE_NAME, sdlFileName);
+    public SetAppIcon setSdlFileName(@NonNull String sdlFileName) {
+        setParameters(KEY_SDL_FILE_NAME, sdlFileName);
+        return this;
     }
 
 	/**

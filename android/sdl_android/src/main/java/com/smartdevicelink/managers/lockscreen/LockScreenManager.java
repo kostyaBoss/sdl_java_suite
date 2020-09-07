@@ -37,8 +37,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
-import android.os.Build;
-import android.util.Log;
+
+import androidx.annotation.RestrictTo;
 
 import com.smartdevicelink.managers.BaseSubManager;
 import com.smartdevicelink.managers.CompletionListener;
@@ -54,9 +54,8 @@ import com.smartdevicelink.proxy.rpc.enums.LockScreenStatus;
 import com.smartdevicelink.proxy.rpc.enums.PredefinedWindows;
 import com.smartdevicelink.proxy.rpc.enums.RequestType;
 import com.smartdevicelink.proxy.rpc.listeners.OnRPCNotificationListener;
-import com.smartdevicelink.util.AndroidTools;
+import com.smartdevicelink.util.DebugTool;
 
-import java.io.IOException;
 import java.lang.ref.WeakReference;
 
 /**
@@ -67,6 +66,7 @@ import java.lang.ref.WeakReference;
  * The LockscreenManager handles the logic of showing and hiding the lock screen. <br>
  *
  */
+@RestrictTo(RestrictTo.Scope.LIBRARY)
 public class LockScreenManager extends BaseSubManager {
 
 	private static final String TAG = "LockScreenManager";
@@ -76,17 +76,20 @@ public class LockScreenManager extends BaseSubManager {
 	private String deviceIconUrl;
 	boolean driverDistStatus, mIsLockscreenDismissible, enableDismissGesture, lockScreenEnabled, deviceLogoEnabled;
 	private volatile boolean isApplicationForegrounded;
-	private android.arch.lifecycle.LifecycleObserver lifecycleObserver;
+	private androidx.lifecycle.LifecycleObserver lifecycleObserver;
 	int lockScreenIcon, lockScreenColor, customView, displayMode;
 	Bitmap deviceLogo;
 	private boolean mLockScreenHasBeenDismissed, lockscreenDismissReceiverRegistered, receivedFirstDDNotification;
 	private String mLockscreenWarningMsg;
 	private BroadcastReceiver mLockscreenDismissedReceiver;
+	private LockScreenDeviceIconManager mLockScreenDeviceIconManager;
 
 	public LockScreenManager(LockScreenConfig lockScreenConfig, Context context, ISdl internalInterface){
 
 		super(internalInterface);
 		this.context = new WeakReference<>(context);
+		this.mLockScreenDeviceIconManager = new LockScreenDeviceIconManager(context);
+
 
 		// set initial class variables
 		hmiLevel = HMILevel.HMI_NONE;
@@ -96,7 +99,7 @@ public class LockScreenManager extends BaseSubManager {
 		lockScreenIcon = lockScreenConfig.getAppIcon();
 		lockScreenColor = lockScreenConfig.getBackgroundColor();
 		customView = lockScreenConfig.getCustomView();
-		lockScreenEnabled = lockScreenConfig.isEnabled();
+		lockScreenEnabled = lockScreenConfig.getDisplayMode() != LockScreenConfig.DISPLAY_MODE_NEVER;
 		deviceLogoEnabled = lockScreenConfig.isDeviceLogoEnabled();
 		displayMode = lockScreenConfig.getDisplayMode();
 		enableDismissGesture = lockScreenConfig.enableDismissGesture();
@@ -137,17 +140,15 @@ public class LockScreenManager extends BaseSubManager {
 		deviceLogo = null;
 		deviceIconUrl = null;
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-			try {
-				if (android.arch.lifecycle.ProcessLifecycleOwner.get() != null && lifecycleObserver != null) {
-					android.arch.lifecycle.ProcessLifecycleOwner.get().getLifecycle().removeObserver(lifecycleObserver);
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
+		try {
+			if (androidx.lifecycle.ProcessLifecycleOwner.get() != null && lifecycleObserver != null) {
+				androidx.lifecycle.ProcessLifecycleOwner.get().getLifecycle().removeObserver(lifecycleObserver);
 			}
-
-			lifecycleObserver = null;
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
+
+		lifecycleObserver = null;
 
 		isApplicationForegrounded = false;
 
@@ -190,7 +191,7 @@ public class LockScreenManager extends BaseSubManager {
 				if (notification != null) {
 					OnDriverDistraction ddState = (OnDriverDistraction) notification;
 					Boolean isDismissible = ddState.getLockscreenDismissibility();
-					Log.i(TAG, "Lock screen dismissible: "+ isDismissible);
+					DebugTool.logInfo(TAG, "Lock screen dismissible: "+ isDismissible);
 					if (isDismissible != null) {
 						// both of these conditions must be met to be able to dismiss lockscreen
 						if (isDismissible && enableDismissGesture){
@@ -231,7 +232,7 @@ public class LockScreenManager extends BaseSubManager {
 					if (msg.getRequestType() == RequestType.LOCK_SCREEN_ICON_URL &&
 							msg.getUrl() != null) {
 						// send intent to activity to download icon from core
-						deviceIconUrl = msg.getUrl();
+						deviceIconUrl = msg.getUrl().replace("http://", "https://");
 						downloadDeviceIcon(deviceIconUrl);
 					}
 				}
@@ -240,29 +241,25 @@ public class LockScreenManager extends BaseSubManager {
 		}
 
 		// Set up listener for Application Foreground / Background events
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-			try {
-				lifecycleObserver = new android.arch.lifecycle.LifecycleObserver() {
-					@android.arch.lifecycle.OnLifecycleEvent(android.arch.lifecycle.Lifecycle.Event.ON_START)
-					public void onMoveToForeground() {
-						isApplicationForegrounded = true;
-						launchLockScreenActivity();
-					}
-
-					@android.arch.lifecycle.OnLifecycleEvent(android.arch.lifecycle.Lifecycle.Event.ON_STOP)
-					public void onMoveToBackground() {
-						isApplicationForegrounded = false;
-					}
-				};
-
-				if (android.arch.lifecycle.ProcessLifecycleOwner.get() != null) {
-					android.arch.lifecycle.ProcessLifecycleOwner.get().getLifecycle().addObserver(lifecycleObserver);
+		try {
+			lifecycleObserver = new androidx.lifecycle.LifecycleObserver() {
+				@androidx.lifecycle.OnLifecycleEvent(androidx.lifecycle.Lifecycle.Event.ON_START)
+				public void onMoveToForeground() {
+					isApplicationForegrounded = true;
+					launchLockScreenActivity();
 				}
-			} catch (Exception e) {
-				e.printStackTrace();
+
+				@androidx.lifecycle.OnLifecycleEvent(androidx.lifecycle.Lifecycle.Event.ON_STOP)
+				public void onMoveToBackground() {
+					isApplicationForegrounded = false;
+				}
+			};
+
+			if (androidx.lifecycle.ProcessLifecycleOwner.get() != null) {
+				androidx.lifecycle.ProcessLifecycleOwner.get().getLifecycle().addObserver(lifecycleObserver);
 			}
-		} else{
-			isApplicationForegrounded = true;
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 
 		mLockscreenDismissedReceiver = new BroadcastReceiver() {
@@ -375,17 +372,25 @@ public class LockScreenManager extends BaseSubManager {
 		new Thread(new Runnable(){
 			@Override
 			public void run(){
-				try{
-					deviceLogo = AndroidTools.downloadImage(url);
-					Intent intent = new Intent(SDLLockScreenActivity.LOCKSCREEN_DEVICE_LOGO_DOWNLOADED);
-					intent.putExtra(SDLLockScreenActivity.LOCKSCREEN_DEVICE_LOGO_EXTRA, deviceLogoEnabled);
-					intent.putExtra(SDLLockScreenActivity.LOCKSCREEN_DEVICE_LOGO_BITMAP, deviceLogo);
-					if (context.get() != null) {
-						context.get().sendBroadcast(intent);
+				mLockScreenDeviceIconManager.retrieveIcon(url, new LockScreenDeviceIconManager.OnIconRetrievedListener() {
+					@Override
+					public void onImageRetrieved(Bitmap icon) {
+						deviceLogo = icon;
+						if(deviceLogo != null) {
+							Intent intent = new Intent(SDLLockScreenActivity.LOCKSCREEN_DEVICE_LOGO_DOWNLOADED);
+							intent.putExtra(SDLLockScreenActivity.LOCKSCREEN_DEVICE_LOGO_EXTRA, deviceLogoEnabled);
+							intent.putExtra(SDLLockScreenActivity.LOCKSCREEN_DEVICE_LOGO_BITMAP, deviceLogo);
+							if (context.get() != null) {
+								context.get().sendBroadcast(intent);
+							}
+						}
 					}
-				}catch(IOException e){
-					Log.e(TAG, "device Icon Error Downloading");
-				}
+
+					@Override
+					public void onError(String info) {
+						DebugTool.logError(TAG, info);
+					}
+				});
 			}
 		}).start();
 	}

@@ -32,7 +32,9 @@
 package com.smartdevicelink.util;
 
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
+
+import com.smartdevicelink.proxy.rpc.SdlMsgVersion;
 
 public class Version {
 
@@ -48,6 +50,12 @@ public class Version {
         this.major = major;
         this.minor = minor;
         this.patch = patch;
+    }
+
+    public Version(SdlMsgVersion sdlMsgVersion){
+        this.major = sdlMsgVersion.getMajorVersion();
+        this.minor = sdlMsgVersion.getMinorVersion();
+        this.patch = sdlMsgVersion.getPatchVersion();
     }
 
     public Version(String versionString){

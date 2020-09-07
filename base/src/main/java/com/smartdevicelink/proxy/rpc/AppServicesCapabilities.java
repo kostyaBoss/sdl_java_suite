@@ -31,7 +31,7 @@
  */
 package com.smartdevicelink.proxy.rpc;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.smartdevicelink.proxy.RPCStruct;
 import com.smartdevicelink.proxy.rpc.enums.ServiceUpdateReason;
@@ -72,9 +72,10 @@ public class AppServicesCapabilities extends RPCStruct {
 	 * capability the affected services will include an update reason in that item
 	 * @param appServices -
 	 */
-	public void setAppServices(List<AppServiceCapability> appServices){
-		setValue(KEY_APP_SERVICES, appServices);
-	}
+	public AppServicesCapabilities setAppServices( List<AppServiceCapability> appServices) {
+        setValue(KEY_APP_SERVICES, appServices);
+        return this;
+    }
 
 	/**
 	 * An array of currently available services. If this is an update to the

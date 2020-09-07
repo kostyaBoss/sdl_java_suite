@@ -33,7 +33,6 @@ package com.smartdevicelink.proxy.rpc.listeners;
 
 import com.smartdevicelink.proxy.RPCMessage;
 import com.smartdevicelink.proxy.RPCResponse;
-import com.smartdevicelink.proxy.rpc.enums.Result;
 
 public abstract class OnRPCResponseListener extends OnRPCListener {
 
@@ -68,17 +67,4 @@ public abstract class OnRPCResponseListener extends OnRPCListener {
 	 * for a PutFile request, the message parameter should be cast to a PutFileResponse class.
 	 */
 	public abstract void onResponse(int correlationId, final RPCResponse response);
-	
-	/**
-	 * Called when there was some sort of error during the original request.
-	 * @param correlationId
-	 * @param resultCode
-	 * @param info
-	 */
-	public void onError(int correlationId, Result resultCode, String info){
-		
-	};
-	
-
-	
 }

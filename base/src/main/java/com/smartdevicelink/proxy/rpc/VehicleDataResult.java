@@ -31,7 +31,7 @@
  */
 package com.smartdevicelink.proxy.rpc;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.smartdevicelink.proxy.RPCStruct;
 import com.smartdevicelink.proxy.rpc.enums.VehicleDataResultCode;
@@ -100,25 +100,28 @@ public class VehicleDataResult extends RPCStruct {
 		setResultCode(resultCode);
 	}
 	
-	public void setResultCode(@NonNull VehicleDataResultCode resultCode) {
-		setValue(KEY_RESULT_CODE, resultCode);
-	}
+	public VehicleDataResult setResultCode(@NonNull VehicleDataResultCode resultCode) {
+        setValue(KEY_RESULT_CODE, resultCode);
+        return this;
+    }
 	
 	public VehicleDataResultCode getResultCode() {
 		return (VehicleDataResultCode) getObject(VehicleDataResultCode.class, KEY_RESULT_CODE);
 	}	
 
-	public void setDataType(@NonNull VehicleDataType dataType) {
-		setValue(KEY_DATA_TYPE, dataType);
-	}
+	public VehicleDataResult setDataType(@NonNull VehicleDataType dataType) {
+        setValue(KEY_DATA_TYPE, dataType);
+        return this;
+    }
 
 	public VehicleDataType getDataType() {
 		return (VehicleDataType) getObject(VehicleDataType.class, KEY_DATA_TYPE);
 	}
 	
-	public void setOEMCustomVehicleDataType(String oemCustomDataType) {
-		setValue(KEY_OEM_CUSTOM_DATA_TYPE, oemCustomDataType);
-	}
+	public VehicleDataResult setOEMCustomVehicleDataType( String oemCustomDataType) {
+        setValue(KEY_OEM_CUSTOM_DATA_TYPE, oemCustomDataType);
+        return this;
+    }
 
 	public String getOEMCustomVehicleDataType() {
 		return (String) getObject(String.class, KEY_OEM_CUSTOM_DATA_TYPE);

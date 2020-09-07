@@ -32,8 +32,8 @@
 
 package com.smartdevicelink.managers.screen.menu;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.smartdevicelink.managers.file.filetypes.SdlArtwork;
 import com.smartdevicelink.proxy.rpc.enums.MenuLayout;
@@ -111,24 +111,6 @@ public class MenuCell implements Cloneable{
 	}
 
 	// CONSTRUCTOR FOR CELL THAT WILL LINK TO SUB MENU
-
-	/**
-	 * Creates a new MenuCell Object with multiple parameters set
-	 * <strong>NOTE: because this has sub-cells, there does not need to be a listener</strong>
-	 * @param title The cell's primary text
-	 * @param icon The cell's image
-	 * @param subCells The sub-cells for the sub menu that will appear when the cell is selected
-	 *
-	 * @deprecated use {@link #MenuCell(String, MenuLayout, SdlArtwork, List)}
-	 */
-	@Deprecated
-	public MenuCell(@NonNull String title, @Nullable SdlArtwork icon, @Nullable List<MenuCell> subCells) {
-		setTitle(title); // title is the only required param
-		setIcon(icon);
-		setSubCells(subCells);
-		setCellId(MAX_ID);
-		setParentCellId(MAX_ID);
-	}
 
 	/**
 	 * Creates a new MenuCell Object with multiple parameters set
@@ -299,7 +281,7 @@ public class MenuCell implements Cloneable{
 	public int hashCode() {
 		int result = 1;
 		result += ((getTitle() == null) ? 0 : Integer.rotateLeft(getTitle().hashCode(), 1));
-		result += ((getIcon() == null || getIcon().getName() == null) ? 0 : Integer.rotateLeft(getIcon().getName().hashCode(), 2));
+		result += ((getIcon() == null) ? 0 : Integer.rotateLeft(getIcon().hashCode(), 2));
 		result += ((getVoiceCommands() == null) ? 0 : Integer.rotateLeft(getVoiceCommands().hashCode(), 3));
 		result += ((getSubCells() == null) ? 0 : Integer.rotateLeft(1, 4));
 		return result;

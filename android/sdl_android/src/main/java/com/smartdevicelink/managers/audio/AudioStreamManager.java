@@ -38,30 +38,34 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
-import android.support.annotation.IntDef;
-import android.support.annotation.NonNull;
-import android.support.annotation.RequiresApi;
-import android.util.Log;
+import androidx.annotation.IntDef;
+import androidx.annotation.NonNull;
+import androidx.annotation.RestrictTo;
 
 import com.smartdevicelink.SdlConnection.SdlSession;
 import com.smartdevicelink.managers.CompletionListener;
 import com.smartdevicelink.managers.StreamingStateMachine;
+import com.smartdevicelink.managers.lifecycle.OnSystemCapabilityListener;
+import com.smartdevicelink.protocol.ProtocolMessage;
 import com.smartdevicelink.protocol.enums.FunctionID;
 import com.smartdevicelink.protocol.enums.SessionType;
 import com.smartdevicelink.proxy.RPCNotification;
 import com.smartdevicelink.proxy.interfaces.IAudioStreamListener;
 import com.smartdevicelink.proxy.interfaces.ISdl;
 import com.smartdevicelink.proxy.interfaces.ISdlServiceListener;
-import com.smartdevicelink.proxy.interfaces.OnSystemCapabilityListener;
 import com.smartdevicelink.proxy.rpc.AudioPassThruCapabilities;
 import com.smartdevicelink.proxy.rpc.OnHMIStatus;
 import com.smartdevicelink.proxy.rpc.enums.HMILevel;
 import com.smartdevicelink.proxy.rpc.enums.PredefinedWindows;
 import com.smartdevicelink.proxy.rpc.enums.SystemCapabilityType;
 import com.smartdevicelink.proxy.rpc.listeners.OnRPCNotificationListener;
+import com.smartdevicelink.streaming.IStreamListener;
+import com.smartdevicelink.streaming.StreamPacketizer;
 import com.smartdevicelink.transport.utl.TransportRecord;
+import com.smartdevicelink.util.DebugTool;
 import com.smartdevicelink.util.Version;
 
+import java.io.IOException;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.ref.WeakReference;
@@ -75,7 +79,6 @@ import java.util.Queue;
  * to the connected device. Audio files can be pushed to the manager in order to
  * play them on the connected device. The manager uses the Android built-in MediaCodec.
  */
-@RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
 public class AudioStreamManager extends BaseAudioStreamManager {
     private static final String TAG = AudioStreamManager.class.getSimpleName();
     private static final int COMPLETION_TIMEOUT = 2000;
@@ -93,6 +96,9 @@ public class AudioStreamManager extends BaseAudioStreamManager {
     private CompletionListener serviceCompletionListener;
     // As the internal interface does not provide timeout we need to use a future task
     private final Handler serviceCompletionHandler;
+    private StreamPacketizer audioPacketizer;
+    private SdlSession sdlSession = null;
+    private SessionType sessionType = null;
 
     private final Runnable serviceCompletionTimeoutCallback = new Runnable() {
         @Override
@@ -108,10 +114,12 @@ public class AudioStreamManager extends BaseAudioStreamManager {
     private final ISdlServiceListener serviceListener = new ISdlServiceListener() {
         @Override
         public void onServiceStarted(SdlSession session, SessionType type, boolean isEncrypted) {
+            sdlSession = session;
+            sessionType = type;
             if (SessionType.PCM.equals(type)) {
                 serviceCompletionHandler.removeCallbacks(serviceCompletionTimeoutCallback);
 
-                sdlAudioStream = session.startAudioStream();
+                sdlAudioStream = startAudioStream(session);
                 streamingStateMachine.transitionToState(StreamingStateMachine.STARTED);
 
                 if (serviceCompletionListener != null) {
@@ -127,7 +135,7 @@ public class AudioStreamManager extends BaseAudioStreamManager {
             if (SessionType.PCM.equals(type)) {
                 serviceCompletionHandler.removeCallbacks(serviceCompletionTimeoutCallback);
 
-                session.stopAudioStream();
+                stopAudioStream();
                 sdlAudioStream = null;
                 streamingStateMachine.transitionToState(StreamingStateMachine.NONE);
 
@@ -144,8 +152,9 @@ public class AudioStreamManager extends BaseAudioStreamManager {
             if (SessionType.PCM.equals(type)) {
                 serviceCompletionHandler.removeCallbacks(serviceCompletionTimeoutCallback);
 
+                stopAudioStream();
                 streamingStateMachine.transitionToState(StreamingStateMachine.ERROR);
-                Log.e(TAG, "OnServiceError: " + reason);
+                DebugTool.logError(TAG, "OnServiceError: " + reason);
                 streamingStateMachine.transitionToState(StreamingStateMachine.NONE);
 
                 if (serviceCompletionListener != null) {
@@ -177,16 +186,9 @@ public class AudioStreamManager extends BaseAudioStreamManager {
      * Creates a new object of AudioStreamManager
      * @param internalInterface The internal interface to the connected device.
      */
+    @RestrictTo(RestrictTo.Scope.LIBRARY)
     public AudioStreamManager(@NonNull ISdl internalInterface, @NonNull Context context) {
         super(internalInterface);
-        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN){
-            this.queue = null;
-            this.context = null;
-            this.serviceCompletionHandler = null;
-            this.streamingStateMachine = null;
-            transitionToState(ERROR);
-            return;
-        }
         this.queue = new LinkedList<>();
         this.context = new WeakReference<>(context);
         this.serviceCompletionHandler = new Handler(Looper.getMainLooper());
@@ -229,7 +231,7 @@ public class AudioStreamManager extends BaseAudioStreamManager {
 
             @Override
             public void onError(String info) {
-                Log.e(TAG, "Error retrieving audio streaming capability: " + info);
+                DebugTool.logError(TAG, "Error retrieving audio streaming capability: " + info);
                 streamingStateMachine.transitionToState(StreamingStateMachine.ERROR);
                 transitionToState(ERROR);
             }
@@ -237,6 +239,7 @@ public class AudioStreamManager extends BaseAudioStreamManager {
     }
 
     @Override
+    @RestrictTo(RestrictTo.Scope.LIBRARY)
     public void dispose() {
         stopAudioStream(new CompletionListener() {
             @Override
@@ -256,14 +259,14 @@ public class AudioStreamManager extends BaseAudioStreamManager {
     public void startAudioStream(boolean encrypted, final CompletionListener completionListener) {
         // audio stream cannot be started without a connected internal interface
         if (!internalInterface.isConnected()) {
-            Log.w(TAG, "startAudioStream called without being connected.");
+            DebugTool.logWarning(TAG, "startAudioStream called without being connected.");
             finish(completionListener, false);
             return;
         }
 
         // streaming state must be NONE (starting the service is ready. starting stream is started)
         if (streamingStateMachine.getState() != StreamingStateMachine.NONE) {
-            Log.w(TAG, "startAudioStream called but streamingStateMachine is not in state NONE (current: " + streamingStateMachine.getState() + ")");
+            DebugTool.logWarning(TAG, "startAudioStream called but streamingStateMachine is not in state NONE (current: " + streamingStateMachine.getState() + ")");
             finish(completionListener, false);
             return;
         }
@@ -333,14 +336,14 @@ public class AudioStreamManager extends BaseAudioStreamManager {
      */
     public void stopAudioStream(final CompletionListener completionListener) {
         if (!internalInterface.isConnected()) {
-            Log.w(TAG, "stopAudioStream called without being connected");
+            DebugTool.logWarning(TAG, "stopAudioStream called without being connected");
             finish(completionListener, false);
             return;
         }
 
         // streaming state must be STARTED (starting the service is ready. starting stream is started)
         if (streamingStateMachine.getState() != StreamingStateMachine.STARTED) {
-            Log.w(TAG, "stopAudioStream called but streamingStateMachine is not STARTED (current: " + streamingStateMachine.getState() + ")");
+            DebugTool.logWarning(TAG, "stopAudioStream called but streamingStateMachine is not STARTED (current: " + streamingStateMachine.getState() + ")");
             finish(completionListener, false);
             return;
         }
@@ -348,7 +351,8 @@ public class AudioStreamManager extends BaseAudioStreamManager {
         streamingStateMachine.transitionToState(StreamingStateMachine.STOPPED);
         serviceCompletionListener = completionListener;
         serviceCompletionHandler.postDelayed(serviceCompletionTimeoutCallback, COMPLETION_TIMEOUT);
-        internalInterface.stopAudioService();
+        stopAudioStream();
+        serviceListener.onServiceEnded(sdlSession, sessionType);
     }
 
     /**
@@ -414,7 +418,7 @@ public class AudioStreamManager extends BaseAudioStreamManager {
 
             @Override
             public void onDecoderError(Exception e) {
-                Log.e(TAG, "decoder error", e);
+                DebugTool.logError(TAG, "decoder error", e);
             }
         };
 
@@ -444,7 +448,7 @@ public class AudioStreamManager extends BaseAudioStreamManager {
     public void pushBuffer(ByteBuffer data, CompletionListener completionListener) {
         // streaming state must be STARTED (starting the service is ready. starting stream is started)
         if (streamingStateMachine.getState() != StreamingStateMachine.STARTED) {
-            Log.w(TAG, "AudioStreamManager is not ready!");
+            DebugTool.logWarning(TAG, "AudioStreamManager is not ready!");
             return;
         }
 
@@ -499,5 +503,31 @@ public class AudioStreamManager extends BaseAudioStreamManager {
         // float array, though within a ByteBuffer it is stored in native endian byte order. The nominal
         // range of ENCODING_PCM_FLOAT audio data is [-1.0, 1.0].
         int FLOAT = Float.SIZE >> 3;
+    }
+
+    protected IAudioStreamListener startAudioStream(final SdlSession session) {
+
+        IStreamListener streamListener = new IStreamListener() {
+            @Override
+            public void sendStreamPacket(ProtocolMessage pm) {
+                session.sendMessage(pm);
+            }
+        };
+
+        try {
+            audioPacketizer = new StreamPacketizer(streamListener, null, SessionType.PCM, (byte) session.getSessionId(), session);
+            audioPacketizer.start();
+            return audioPacketizer;
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    protected boolean stopAudioStream() {
+        if (audioPacketizer != null) {
+            audioPacketizer.stop();
+            return true;
+        }
+        return false;
     }
 }

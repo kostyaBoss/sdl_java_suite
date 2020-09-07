@@ -31,7 +31,7 @@
  */
 package com.smartdevicelink.proxy.rpc;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.smartdevicelink.protocol.enums.FunctionID;
 import com.smartdevicelink.proxy.RPCResponse;
@@ -78,7 +78,8 @@ public class AlertResponse extends RPCResponse {
     public Integer getTryAgainTime() {
         return getInteger(KEY_TRY_AGAIN_TIME);
     }
-    public void setTryAgainTime(Integer tryAgainTime) {
+    public AlertResponse setTryAgainTime( Integer tryAgainTime) {
         setParameters(KEY_TRY_AGAIN_TIME, tryAgainTime);
+        return this;
     }
 }

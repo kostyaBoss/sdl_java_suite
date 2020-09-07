@@ -43,13 +43,17 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
+import android.os.AsyncTask;
 import android.os.Build;
-import android.support.annotation.NonNull;
-import android.util.Log;
+import android.os.Handler;
+import android.os.Looper;
+import androidx.annotation.NonNull;
 
 import com.smartdevicelink.util.AndroidTools;
+import com.smartdevicelink.util.DebugTool;
 import com.smartdevicelink.util.HttpRequestTask;
 import com.smartdevicelink.util.HttpRequestTask.HttpRequestTaskCallback;
+import com.smartdevicelink.util.ServiceFinder;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -60,6 +64,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Vector;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This class will tell us if the currently running router service is valid or not.
@@ -138,11 +147,15 @@ public class RouterServiceValidator {
 		setSecurityLevel(config.securityLevel);
 		inDebugMode = inDebugMode();
 	}
-	
+
 	/**
 	 * Main function to call to ensure we are connecting to a validated router service
 	 * @return whether or not the currently running router service can be trusted.
+	 *
+	 * Due to SDL 0220 proposal, we should use validateAsync always.
+	 * This function remains only for backward compatibility.
 	 */
+	@Deprecated
 	public boolean validate(){
 		
 		if(securityLevel == -1){
@@ -158,11 +171,11 @@ public class RouterServiceValidator {
 		String packageName = null;
 		
 		if(this.service != null){
-			Log.d(TAG, "Supplied service name of " + this.service.getClassName());
+			DebugTool.logInfo(TAG, "Supplied service name of " + this.service.getClassName());
 			if(Build.VERSION.SDK_INT < Build.VERSION_CODES.O && !isServiceRunning(context,this.service)){
 				//This means our service isn't actually running, so set to null. Hopefully we can find a real router service after this.
 				service = null;
-				Log.w(TAG, "Supplied service is not actually running.");
+				DebugTool.logWarning(TAG, "Supplied service is not actually running.");
 			} else {
 				// If the running router service is created by this app, the validation is good by default
 				if (this.service.getPackageName().equals(context.getPackageName())) {
@@ -198,6 +211,187 @@ public class RouterServiceValidator {
 		//TODO spin up a known good router service
 		wakeUpRouterServices();
 		return false;
+	}
+
+	/**
+	 * Asynchronously validate the target RouterService, which includes finding the right RouterService.
+	 * @param callback: callback gets called when validation finishes.
+	 */
+	public void validateAsync(final ValidationStatusCallback callback) {
+		if(securityLevel == -1){
+			securityLevel = getSecurityLevel(context);
+		}
+
+		final PackageManager pm = context.getPackageManager();
+		//Grab the package for the currently running router service. We need this call regardless of if we are in debug mode or not.
+
+		if(this.service != null){
+			DebugTool.logInfo(TAG, "Supplied service name of " + this.service.getClassName());
+			if(Build.VERSION.SDK_INT < Build.VERSION_CODES.O && !isServiceRunning(context,this.service)){
+				//This means our service isn't actually running, so set to null. Hopefully we can find a real router service after this.
+				service = null;
+				DebugTool.logWarning(TAG, "Supplied service is not actually running.");
+			} else {
+				// If the running router service is created by this app, the validation is good by default
+				if (this.service.getPackageName().equals(context.getPackageName()) && callback != null) {
+					callback.onFinishedValidation(true, this.service);
+					return;
+				}
+			}
+		}
+
+		if(this.service == null){
+			DebugTool.logInfo(TAG, "about finding the best Router by using retrieveBestRouterServiceName");
+			new FindRouterTask(new FindConnectedRouterCallback() {
+				@Override
+				public void onFound(ComponentName component) {
+					DebugTool.logInfo(TAG, "FindConnectedRouterCallback.onFound got called. Package=" + component);
+					checkTrustedRouter(callback, pm, component);
+				}
+
+				@Override
+				public void onFailed() {
+					DebugTool.logInfo(TAG, "FindConnectedRouterCallback.onFailed was called");
+					if (callback != null) {
+						callback.onFinishedValidation(false, null);
+					}
+				}
+			}).execute(this.context);
+		} else {
+			// already found the RouterService
+			checkTrustedRouter(callback, pm, service);
+		}
+
+	}
+
+	/**
+	 * checkTrustedRouter: This checks to see if the given component is Trusted RouterService,
+	 * and calls ValidationStatusCallback#onFinishedValidation.
+	 *
+	 * @param callback
+	 * @param pm
+	 * @param component
+	 */
+	private void checkTrustedRouter(final ValidationStatusCallback callback, final PackageManager pm, final ComponentName component) {
+		String packageName = appPackageForComponentName(component, pm);
+		boolean valid = (securityLevel == MultiplexTransportConfig.FLAG_MULTI_SECURITY_OFF);
+
+		if(!valid && packageName!=null){//Make sure there is a service running
+			if(wasInstalledByAppStore(packageName)){ //Was this package installed from a trusted app store
+				if( isTrustedPackage(packageName, pm)){//Is this package on the list of trusted apps.
+					valid = true;
+				}
+			}
+		}
+		if (callback != null) {
+			callback.onFinishedValidation(valid, component);
+			if (valid) {
+				synchronized (this) {
+					this.service = component;
+				}
+			}
+		}
+	}
+	/**
+	 * This method retrieves the best routerservice name asynchronously.
+	 * @param context
+	 */
+	//private void retrieveBestRouterServiceName(Context context) {
+	//	FindRouterTask task = new FindRouterTask(null);
+	//	task.execute(context);
+	//}
+
+	/**
+	 * FindRouterTask: AsyncTask to find the connected RouterService.
+	 */
+	class FindRouterTask extends AsyncTask<Context, Void, ComponentName> {
+		FindConnectedRouterCallback mCallback;
+		final Handler mHandler = new Handler(Looper.getMainLooper());
+		final Integer TIMEOUT_MSEC = 10000; // 10 sec
+
+		FindRouterTask(FindConnectedRouterCallback callback) {
+			mCallback = callback;
+		}
+
+		@Override
+		protected ComponentName doInBackground(final Context... contexts) {
+			// let's use ServiceFinder here
+			final BlockingQueue<ComponentName> serviceQueue = new LinkedBlockingQueue<>();
+			final AtomicInteger _counter = new AtomicInteger(0);
+			Context context = contexts[0];
+			final Thread _currentThread = Thread.currentThread();
+			new ServiceFinder(context, context.getPackageName(), new ServiceFinder.ServiceFinderCallback() {
+				@Override
+				public void onComplete(Vector<ComponentName> routerServices) {
+					// OK, we found the routerServices. Let's see one-by-one.
+					if (routerServices == null || routerServices.isEmpty()) {
+						_currentThread.interrupt();
+						return;
+					}
+
+
+					final int numServices = routerServices.size();
+					for (ComponentName name: routerServices) {
+						final SdlRouterStatusProvider provider = new SdlRouterStatusProvider(contexts[0], name, new SdlRouterStatusProvider.ConnectedStatusCallback() {
+							@Override
+							public void onConnectionStatusUpdate(final boolean connected, final ComponentName service, final Context context) {
+								// make sure this part runs on main thread.
+								mHandler.post(new Runnable() {
+									@Override
+									public void run() {
+										_counter.incrementAndGet();
+										if (connected) {
+											DebugTool.logInfo(TAG, "We found the connected service (" + service + "); currentThread is " + Thread.currentThread().getName());
+											serviceQueue.add(service);
+										} else if (_counter.get() == numServices) {
+											DebugTool.logInfo(TAG, "SdlRouterStatusProvider returns service=" + service + "; connected=" + connected);
+											_currentThread.interrupt();
+										}
+									}
+								});
+							}
+						});
+						DebugTool.logInfo(TAG, "about checkIsConnected; thread=" + Thread.currentThread().getName());
+						provider.checkIsConnected();
+					}
+				}
+			});
+
+			try {
+				ComponentName found = serviceQueue.poll(TIMEOUT_MSEC, TimeUnit.MILLISECONDS);
+				return found;
+			} catch(InterruptedException e) {
+				DebugTool.logInfo(TAG,"FindRouterTask was interrupted because connected Router cannot be found");
+			}
+			return null;
+		}
+
+		@Override
+		protected void onPostExecute(ComponentName componentName) {
+			DebugTool.logInfo(TAG,"onPostExecute componentName=" + componentName);
+			super.onPostExecute(componentName);
+			if (mCallback != null) {
+				if (componentName != null && componentName.getPackageName() != null && componentName.getPackageName().length() != 0) {
+					mCallback.onFound(componentName);
+				} else {
+					mCallback.onFailed();
+				}
+			}
+		}
+
+	}
+
+	/**
+	 * FindConnectedRouterCallback
+	 * Used internally for validating router service.
+	 */
+	private interface FindConnectedRouterCallback {
+		void onFound(ComponentName component);
+		void onFailed();
+	}
+
+	interface ValidationStatusCallback {
+		void onFinishedValidation(boolean valid, ComponentName name);
 	}
 
 	/**
@@ -427,7 +621,7 @@ public class RouterServiceValidator {
 			
 			return apps;
 		}else{
-			Log.i(TAG, "No SDL apps, list was null");
+			DebugTool.logInfo(TAG, "No SDL apps, list was null");
 			return null;
 		}
 	}
@@ -440,13 +634,8 @@ public class RouterServiceValidator {
 	public static boolean createTrustedListRequest(final Context context, boolean forceRefresh){
 		return createTrustedListRequest(context,forceRefresh,null,null);
 	}
-	public static boolean createTrustedListRequest(final Context context, boolean forceRefresh, TrustedListCallback listCallback){Log.d(TAG,"Checking to make sure we have a list");
+	public static boolean createTrustedListRequest(final Context context, boolean forceRefresh, TrustedListCallback listCallback){DebugTool.logInfo(TAG,"Checking to make sure we have a list");
 		return createTrustedListRequest(context,forceRefresh,null,listCallback);
-	}
-	
-	@Deprecated
-	protected static boolean createTrustedListRequest(final Context context, boolean forceRefresh,HttpRequestTask.HttpRequestTaskCallback cb ){
-		return createTrustedListRequest(context,forceRefresh,cb,null);
 	}
 	
 	protected static boolean createTrustedListRequest(final Context context, boolean forceRefresh,HttpRequestTask.HttpRequestTaskCallback cb, final TrustedListCallback listCallback ){
@@ -496,7 +685,7 @@ public class RouterServiceValidator {
 				}
 				return false;
 			}else{
-				Log.d(TAG, "Sdl apps have changed. Need to request new trusted router service list.");
+				DebugTool.logInfo(TAG, "Sdl apps have changed. Need to request new trusted router service list.");
 			}
 		}
 		
@@ -515,7 +704,7 @@ public class RouterServiceValidator {
 
 				@Override
 				public void httpFailure(int statusCode) {
-					Log.e(TAG, "Error while requesting trusted app list: "
+					DebugTool.logError(TAG, "Error while requesting trusted app list: "
 							+ statusCode);
 					pendingListRefresh = false;
 					if(listCallback!=null){listCallback.onListObtained(false);}

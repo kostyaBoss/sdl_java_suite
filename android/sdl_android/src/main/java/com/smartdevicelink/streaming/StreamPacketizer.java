@@ -31,7 +31,8 @@
  */
 package com.smartdevicelink.streaming;
 
-import com.smartdevicelink.SdlConnection.SdlConnection;
+import androidx.annotation.RestrictTo;
+
 import com.smartdevicelink.SdlConnection.SdlSession;
 import com.smartdevicelink.managers.CompletionListener;
 import com.smartdevicelink.protocol.ProtocolMessage;
@@ -46,6 +47,7 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+@RestrictTo(RestrictTo.Scope.LIBRARY)
 public class StreamPacketizer extends AbstractPacketizer implements IVideoStreamListener, IAudioStreamListener, Runnable{
 
 	public final static String TAG = "StreamPacketizer";
@@ -66,7 +68,6 @@ public class StreamPacketizer extends AbstractPacketizer implements IVideoStream
 	// a limit of the buffer size, we avoid buffer overflows when underlying transport is too slow.
 	private static final int MAX_QUEUE_SIZE = 256 * 1024;
 
-	public SdlConnection sdlConnection = null;	//TODO remove completely
     private Object mPauseLock;
     private boolean mPaused;
     private boolean isServiceProtected = false;
@@ -185,13 +186,7 @@ public class StreamPacketizer extends AbstractPacketizer implements IVideoStream
 		}
 		finally
 		{
-			if(_session == null) {
-				if (sdlConnection != null) {
-					sdlConnection.endService(_serviceType, _rpcSessionID);
-				}
-			}else{
-				_session.endService(_serviceType,_rpcSessionID);
-			}
+			_session.endService(_serviceType);
 		}
 	}
 
@@ -240,17 +235,6 @@ public class StreamPacketizer extends AbstractPacketizer implements IVideoStream
 	public void sendAudio(byte[] data, int offset, int length, long presentationTimeUs)
 			throws ArrayIndexOutOfBoundsException {
 		sendArrayData(data, offset, length);
-	}
-
-	/**
-	 * Called by the app.
-	 *
-	 * @see IAudioStreamListener#sendAudio(ByteBuffer, long)
-	 */
-	@Deprecated
-	@Override
-	public void sendAudio(ByteBuffer data, long presentationTimeUs) {
-		sendByteBufferData(data, null);
 	}
 
 	/**

@@ -3,19 +3,17 @@ package com.sdl.hellosdlandroid;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
-import android.util.Log;
 
 import com.smartdevicelink.transport.SdlBroadcastReceiver;
 import com.smartdevicelink.transport.SdlRouterService;
-import com.smartdevicelink.transport.TransportConstants;
+import com.smartdevicelink.util.DebugTool;
 
 public class SdlReceiver  extends SdlBroadcastReceiver {
 	private static final String TAG = "SdlBroadcastReciever";
-	public static final String RECONNECT_LANG_CHANGE = "RECONNECT_LANG_CHANGE";
 
 	@Override
 	public void onSdlEnabled(Context context, Intent intent) {
-		Log.d(TAG, "SDL Enabled");
+		DebugTool.logInfo(TAG, "SDL Enabled");
 		intent.setClass(context, SdlService.class);
 
 		// SdlService needs to be foregrounded in Android O and above
@@ -36,16 +34,5 @@ public class SdlReceiver  extends SdlBroadcastReceiver {
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		super.onReceive(context, intent); // Required if overriding this method
-
-		if (intent != null) {
-			String action = intent.getAction();
-			if (action != null){
-				if(action.equalsIgnoreCase(TransportConstants.START_ROUTER_SERVICE_ACTION)) {
-					if (intent.getBooleanExtra(RECONNECT_LANG_CHANGE, false)) {
-						onSdlEnabled(context, intent);
-					}
-				}
-			}
-		}
 	}
 }

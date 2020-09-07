@@ -32,7 +32,7 @@
 
 package com.smartdevicelink.managers.screen.choiceset;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.smartdevicelink.managers.file.filetypes.SdlArtwork;
 
@@ -224,8 +224,8 @@ public class ChoiceCell {
         result += ((getText() == null) ? 0 : Integer.rotateLeft(getText().hashCode(), 1));
         result += ((getSecondaryText() == null) ? 0 : Integer.rotateLeft(getSecondaryText().hashCode(), 2));
         result += ((getTertiaryText() == null) ? 0 : Integer.rotateLeft(getTertiaryText().hashCode(), 3));
-        result += ((getArtwork() == null || getArtwork().getName() == null) ? 0 : Integer.rotateLeft(getArtwork().getName().hashCode(), 4));
-        result += ((getSecondaryArtwork() == null || getSecondaryArtwork().getName() == null) ? 0 : Integer.rotateLeft(getSecondaryArtwork().getName().hashCode(), 5));
+        result += ((getArtwork() == null) ? 0 : Integer.rotateLeft(getArtwork().hashCode(), 4));
+        result += ((getSecondaryArtwork() == null) ? 0 : Integer.rotateLeft(getSecondaryArtwork().hashCode(), 5));
         result += ((getVoiceCommands() == null) ? 0 : Integer.rotateLeft(getVoiceCommands().hashCode(), 6));
         return result;
     }

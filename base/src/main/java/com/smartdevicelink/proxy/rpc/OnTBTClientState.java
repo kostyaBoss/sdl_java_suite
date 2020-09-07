@@ -31,7 +31,7 @@
  */
 package com.smartdevicelink.proxy.rpc;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.smartdevicelink.protocol.enums.FunctionID;
 import com.smartdevicelink.proxy.RPCNotification;
@@ -104,8 +104,9 @@ public class OnTBTClientState extends RPCNotification {
     /**
      * <p>Called to set the current state of TBT client</p>
      * @param state current state of TBT client
-     */    
-    public void setState( TBTState state ) {
+     */
+    public OnTBTClientState setState( TBTState state) {
         setParameters(KEY_STATE, state);
+        return this;
     }
 } // end-class

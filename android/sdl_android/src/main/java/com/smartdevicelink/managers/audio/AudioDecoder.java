@@ -36,11 +36,11 @@ import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.net.Uri;
 import android.os.Build;
-import android.support.annotation.NonNull;
-import android.support.annotation.RequiresApi;
-import android.util.Log;
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 
 import com.smartdevicelink.managers.audio.AudioStreamManager.SampleType;
+import com.smartdevicelink.util.DebugTool;
 
 import java.nio.ByteBuffer;
 
@@ -89,7 +89,7 @@ public class AudioDecoder extends BaseAudioDecoder {
                         SampleBuffer targetSampleBuffer = AudioDecoder.super.onOutputBufferAvailable(outputBuffer);
                         AudioDecoder.this.listener.onAudioDataAvailable(targetSampleBuffer);
                     } else {
-                        Log.w(TAG, "output buffer empty. Chance that silence was detected");
+                        DebugTool.logWarning(TAG, "output buffer empty. Chance that silence was detected");
                     }
 
                     mediaCodec.releaseOutputBuffer(i, false);

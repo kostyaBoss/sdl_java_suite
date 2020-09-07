@@ -31,7 +31,7 @@
  */
 package com.smartdevicelink.proxy.rpc;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.smartdevicelink.protocol.enums.FunctionID;
 import com.smartdevicelink.proxy.RPCNotification;
@@ -160,11 +160,12 @@ public class OnButtonPress extends RPCNotification {
         return (ButtonName) getObject(ButtonName.class, KEY_BUTTON_NAME);
     }
     /**
-     * <p>Set the button's name</p>    
+     * <p>Set the button's name</p>
      * @param buttonName name of the button
-     */    
-    public void setButtonName( @NonNull ButtonName buttonName ) {
+     */
+    public OnButtonPress setButtonName(@NonNull ButtonName buttonName) {
         setParameters(KEY_BUTTON_NAME, buttonName);
+        return this;
     }
     /**<p>Returns <i>{@linkplain ButtonPressMode}</i></p>
      * @return ButtonPressMode whether this is a long or short button press event
@@ -175,14 +176,28 @@ public class OnButtonPress extends RPCNotification {
     /**
      * <p>Set the button press mode of the event</p>
      * @param buttonPressMode indicates whether this is a short or long press
-     */    
-    public void setButtonPressMode( @NonNull ButtonPressMode buttonPressMode ) {
+     */
+    public OnButtonPress setButtonPressMode(@NonNull ButtonPressMode buttonPressMode) {
         setParameters(KEY_BUTTON_PRESS_MODE, buttonPressMode);
+        return this;
     }
-    public void setCustomButtonName(Integer customButtonID) {
+
+    /**
+     * Set CustomButtonID of the button
+     * If ButtonName is "CUSTOM_BUTTON", this references the integer ID passed by a custom button. (e.g. softButton ID)
+     * @param customButtonID CustomButtonID of the button
+     */
+    public OnButtonPress setCustomButtonID( Integer customButtonID) {
         setParameters(KEY_CUSTOM_BUTTON_ID, customButtonID);
+        return this;
     }
-    public Integer getCustomButtonName() {
-    	return getInteger(KEY_CUSTOM_BUTTON_ID);
+
+    /**
+     * Get CustomButtonID of the button
+     * If ButtonName is "CUSTOM_BUTTON", this references the integer ID passed by a custom button. (e.g. softButton ID)
+     * @return CustomButtonID of the button
+     */
+    public Integer getCustomButtonID() {
+        return getInteger(KEY_CUSTOM_BUTTON_ID);
     }
 }

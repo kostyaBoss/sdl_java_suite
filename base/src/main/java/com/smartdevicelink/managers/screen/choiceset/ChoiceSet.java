@@ -32,20 +32,22 @@
 
 package com.smartdevicelink.managers.screen.choiceset;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
-import com.smartdevicelink.proxy.TTSChunkFactory;
 import com.smartdevicelink.proxy.rpc.KeyboardProperties;
 import com.smartdevicelink.proxy.rpc.TTSChunk;
 import com.smartdevicelink.proxy.rpc.VrHelpItem;
+import com.smartdevicelink.proxy.rpc.enums.SpeechCapabilities;
 import com.smartdevicelink.util.DebugTool;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Hashtable;
 import java.util.List;
 
 public class ChoiceSet {
+    private static final String TAG = "ChoiceSet";
     private String title;
     private List<TTSChunk> initialPrompt, timeoutPrompt, helpPrompt;
     private ChoiceSetLayout layout;
@@ -107,15 +109,15 @@ public class ChoiceSet {
 
         // Help the dev by creating TTS chunks for them
         if (initialPrompt != null){
-            setInitialPrompt(TTSChunkFactory.createSimpleTTSChunks(initialPrompt));
+            setInitialPrompt(Collections.singletonList(new TTSChunk(initialPrompt, SpeechCapabilities.TEXT)));
         }
 
         if (timeoutPrompt != null){
-            setTimeoutPrompt(TTSChunkFactory.createSimpleTTSChunks(timeoutPrompt));
+            setTimeoutPrompt(Collections.singletonList(new TTSChunk(timeoutPrompt, SpeechCapabilities.TEXT)));
         }
 
         if (helpPrompt != null){
-            setHelpPrompt(TTSChunkFactory.createSimpleTTSChunks(helpPrompt));
+            setHelpPrompt(Collections.singletonList(new TTSChunk(helpPrompt, SpeechCapabilities.TEXT)));
         }
 
         // things to do
@@ -361,17 +363,17 @@ public class ChoiceSet {
         if (DebugTool.isDebugEnabled()) {
             if (getTitle() != null) {
                 if (getTitle().length() == 0 || getTitle().length() > 500) {
-                    DebugTool.logWarning("Attempted to create a choice set with a title of " + getTitle().length() + " length. Only 500 characters are supported.");
+                    DebugTool.logWarning(TAG, "Attempted to create a choice set with a title of " + getTitle().length() + " length. Only 500 characters are supported.");
                 }
             }
             if (getTimeout() != null) {
                 if (getTimeout() < 5 || getTimeout() > 100) {
-                    DebugTool.logWarning("Attempted to create a choice set with a " + getTimeout() + " second timeout; Only 5 - 100 seconds is valid");
+                    DebugTool.logWarning(TAG, "Attempted to create a choice set with a " + getTimeout() + " second timeout; Only 5 - 100 seconds is valid");
                 }
             }
             if (getChoices() != null) {
                 if (getChoices().size() == 0 || getChoices().size() > 100) {
-                    DebugTool.logWarning("Attempted to create a choice set with "+getChoices().size()+" choices; Only 1 - 100 choices are valid");
+                    DebugTool.logWarning(TAG, "Attempted to create a choice set with "+getChoices().size()+" choices; Only 1 - 100 choices are valid");
                 }
             }
         }
@@ -396,5 +398,4 @@ public class ChoiceSet {
         }
         return clonedHelpItems;
     }
-
 }

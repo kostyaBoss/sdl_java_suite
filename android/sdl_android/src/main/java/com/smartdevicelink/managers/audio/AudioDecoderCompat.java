@@ -35,12 +35,10 @@ import android.content.Context;
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.net.Uri;
-import android.os.Build;
-import android.support.annotation.NonNull;
-import android.support.annotation.RequiresApi;
-import android.util.Log;
+import androidx.annotation.NonNull;
 
 import com.smartdevicelink.managers.audio.AudioStreamManager.SampleType;
+import com.smartdevicelink.util.DebugTool;
 
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
@@ -49,7 +47,6 @@ import java.nio.ByteBuffer;
  * The audio decoder to decode a single audio file to PCM.
  * This decoder supports phones with api < 21 but uses methods deprecated with api 21.
  */
-@RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
 public class AudioDecoderCompat extends BaseAudioDecoder {
     private static final String TAG = AudioDecoderCompat.class.getSimpleName();
     private static final int DEQUEUE_TIMEOUT = 3000;
@@ -107,7 +104,7 @@ public class AudioDecoderCompat extends BaseAudioDecoder {
         public void run() {
             final AudioDecoderCompat reference = weakReference.get();
             if (reference == null) {
-                Log.w(TAG, "AudioDecoderCompat reference was null");
+                DebugTool.logWarning(TAG, "AudioDecoderCompat reference was null");
                 return;
             }
             final ByteBuffer[] inputBuffersArray = reference.decoder.getInputBuffers();

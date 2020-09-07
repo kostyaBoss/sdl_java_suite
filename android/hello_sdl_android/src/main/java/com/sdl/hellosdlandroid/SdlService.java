@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.smartdevicelink.components.BaseSdlService;
 import com.smartdevicelink.managers.CompletionListener;
+import com.smartdevicelink.managers.screen.OnButtonListener;
 import com.smartdevicelink.managers.SdlManager;
 import com.smartdevicelink.managers.SdlManagerListener;
 import com.smartdevicelink.managers.file.filetypes.SdlArtwork;
@@ -18,17 +19,21 @@ import com.smartdevicelink.managers.screen.menu.VoiceCommand;
 import com.smartdevicelink.managers.screen.menu.VoiceCommandSelectionListener;
 import com.smartdevicelink.protocol.enums.FunctionID;
 import com.smartdevicelink.proxy.RPCNotification;
-import com.smartdevicelink.proxy.TTSChunkFactory;
 import com.smartdevicelink.proxy.rpc.Alert;
+import com.smartdevicelink.proxy.rpc.OnButtonEvent;
+import com.smartdevicelink.proxy.rpc.OnButtonPress;
 import com.smartdevicelink.proxy.rpc.OnHMIStatus;
 import com.smartdevicelink.proxy.rpc.Speak;
+import com.smartdevicelink.proxy.rpc.TTSChunk;
 import com.smartdevicelink.proxy.rpc.enums.AppHMIType;
+import com.smartdevicelink.proxy.rpc.enums.ButtonName;
 import com.smartdevicelink.proxy.rpc.enums.FileType;
 import com.smartdevicelink.proxy.rpc.enums.HMILevel;
 import com.smartdevicelink.proxy.rpc.enums.InteractionMode;
 import com.smartdevicelink.proxy.rpc.enums.Language;
 import com.smartdevicelink.proxy.rpc.enums.MenuLayout;
 import com.smartdevicelink.proxy.rpc.enums.PredefinedWindows;
+import com.smartdevicelink.proxy.rpc.enums.SpeechCapabilities;
 import com.smartdevicelink.proxy.rpc.enums.TriggerSource;
 import com.smartdevicelink.proxy.rpc.listeners.OnRPCNotificationListener;
 import com.smartdevicelink.transport.TransportConfigHolder;
@@ -64,7 +69,7 @@ public class SdlService extends BaseSdlService {
 	// TCP/IP transport config
 	// The default port is 12345
 	// The IP is of the machine that is running SDL Core
-	private static final int TCP_PORT = 12481;
+	private static final int TCP_PORT = 12247;
 	private static final String DEV_MACHINE_IP_ADDRESS = "m.sdl.tools";
 
 	@Override
@@ -168,26 +173,46 @@ public class SdlService extends BaseSdlService {
 			public void onStart() { }
 
 			@Override
-			public void onDestroy() { stopSelf(); }
-
-			@Override
 			public void onError(String info, Exception e) { }
 
-			@Override
-			public LifecycleConfigurationUpdate managerShouldUpdateLifecycle(Language language) {
-				String appName;
-				switch (language) {
-					case ES_MX:
-						appName = APP_NAME_ES;
-						break;
-					case FR_CA:
-						appName = APP_NAME_FR;
-						break;
-					default:
-						return null;
+				@Override
+				public void onDestroy() {
+					SdlService.this.stopSelf();
 				}
 
-				return new LifecycleConfigurationUpdate(appName, null, TTSChunkFactory.createSimpleTTSChunks(appName), null);
+			@Override
+			public LifecycleConfigurationUpdate managerShouldUpdateLifecycle(Language language, Language hmiLanguage) {
+					boolean isNeedUpdate = false;
+				String appName= APP_NAME;
+					String ttsName = APP_NAME;
+				switch (language) {
+					case ES_MX:
+						isNeedUpdate = true;
+							ttsName = APP_NAME_ES;
+							break;
+						case FR_CA:
+							isNeedUpdate = true;
+							ttsName = APP_NAME_FR;
+							break;
+						default:
+							break;
+					}
+					switch (hmiLanguage) {
+						case ES_MX:
+							isNeedUpdate = true;appName = APP_NAME_ES;
+						break;
+					case FR_CA:
+						isNeedUpdate = true;appName = APP_NAME_FR;
+						break;
+					default:
+						break;
+				}
+if (isNeedUpdate) {
+						Vector<TTSChunk> chunks = new Vector<>(Collections.singletonList(new TTSChunk(ttsName, SpeechCapabilities.TEXT)));
+				return new LifecycleConfigurationUpdate(appName, null, chunks, null);
+					} else {
+						return null;
+					}
 			}
 		};
 
@@ -305,7 +330,8 @@ public class SdlService extends BaseSdlService {
 	 * Will speak a sample welcome message
 	 */
 	private void performWelcomeSpeak(SdlManager sdlManager){
-		sdlManager.sendRPC(new Speak(TTSChunkFactory.createSimpleTTSChunks(WELCOME_SPEAK)));
+		List<TTSChunk> chunks = Collections.singletonList(new TTSChunk(WELCOME_SPEAK, SpeechCapabilities.TEXT));
+		sdlManager.sendRPC(new Speak(chunks));
 	}
 
 	/**
@@ -329,6 +355,36 @@ public class SdlService extends BaseSdlService {
 	}
 
 	/**
+	 * Attempts to Subscribe to all preset buttons
+	 */
+	private void subscribeToButtons() {
+		ButtonName[] buttonNames = {ButtonName.PLAY_PAUSE, ButtonName.SEEKLEFT, ButtonName.SEEKRIGHT, ButtonName.AC_MAX, ButtonName.AC, ButtonName.RECIRCULATE,
+				ButtonName.FAN_UP, ButtonName.FAN_DOWN, ButtonName.TEMP_UP, ButtonName.TEMP_DOWN, ButtonName.FAN_DOWN, ButtonName.DEFROST_MAX, ButtonName.DEFROST_REAR, ButtonName.DEFROST,
+				ButtonName.UPPER_VENT, ButtonName.LOWER_VENT, ButtonName.VOLUME_UP, ButtonName.VOLUME_DOWN, ButtonName.EJECT, ButtonName.SOURCE, ButtonName.SHUFFLE, ButtonName.REPEAT};
+
+		OnButtonListener onButtonListener = new OnButtonListener() {
+			@Override
+			public void onPress(ButtonName buttonName, OnButtonPress buttonPress) {
+				sdlManager.getScreenManager().setTextField1(buttonName + " pressed");
+			}
+
+			@Override
+			public void onEvent(ButtonName buttonName, OnButtonEvent buttonEvent) {
+				sdlManager.getScreenManager().setTextField2(buttonName + " " + buttonEvent.getButtonEventMode());
+			}
+
+			@Override
+			public void onError(String info) {
+				Log.i(TAG, "onError: " + info);
+			}
+		};
+
+		for (ButtonName buttonName : buttonNames) {
+			sdlManager.getScreenManager().addButtonListener(buttonName, onButtonListener);
+		}
+	}
+
+	/**
 	 * Will show a sample test message on screen as well as speak a sample test message
 	 */
 	private void showTest(SdlManager sdlManager){
@@ -337,7 +393,8 @@ public class SdlService extends BaseSdlService {
 		sdlManager.getScreenManager().setTextField2("");
 		sdlManager.getScreenManager().commit(null);
 
-		sdlManager.sendRPC(new Speak(TTSChunkFactory.createSimpleTTSChunks(TEST_COMMAND_NAME)));
+		List<TTSChunk> chunks = Collections.singletonList(new TTSChunk(TEST_COMMAND_NAME, SpeechCapabilities.TEXT));
+		sdlManager.sendRPC(new Speak(chunks));
 	}
 
 	private void showAlert(String text, SdlManager sdlManager){

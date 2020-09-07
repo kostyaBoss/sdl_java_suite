@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2019, SmartDeviceLink Consortium, Inc.
+ * Copyright (c) 2017 - 2020, SmartDeviceLink Consortium, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,9 +13,9 @@
  * disclaimer in the documentation and/or other materials provided with the
  * distribution.
  *
- * Neither the name of the SmartDeviceLink Consortium, Inc. nor the names of its
- * contributors may be used to endorse or promote products derived from this 
- * software without specific prior written permission.
+ * Neither the name of the SmartDeviceLink Consortium Inc. nor the names of
+ * its contributors may be used to endorse or promote products derived
+ * from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -31,7 +31,7 @@
  */
 package com.smartdevicelink.proxy.rpc;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.smartdevicelink.protocol.enums.FunctionID;
 import com.smartdevicelink.proxy.RPCRequest;
@@ -98,6 +98,14 @@ import java.util.Hashtable;
  * 			<td></td>
  * 			<td>SmartDeviceLink 6.0</td>
  * 		</tr>
+ * 		<tr>
+ * 			<td>parentID</td>
+ * 			<td>Integer</td>
+ * 			<td>unique ID of the sub menu, the command will be added to. If not provided or 0, it will be provided to the top level of the in application menu.</td>
+ * 			<td>N</td>
+ * 		    <td>Min Value: 0 <p>Max Value: 2000000000</p> </td>
+ * 			<td>SmartDeviceLink 7.0.0</td>
+ * 		</tr>
  *  </table>
  *  <b>Response</b>
  *  <p>Indicates that the corresponding request either failed or succeeded. If the response returns with a SUCCESS result code, this means the SubMenu was added to the Command Menu successfully</p>
@@ -116,6 +124,7 @@ public class AddSubMenu extends RPCRequest {
 	public static final String KEY_MENU_ID = "menuID";
 	public static final String KEY_MENU_ICON = "menuIcon";
 	public static final String KEY_MENU_LAYOUT = "menuLayout";
+	public static final String KEY_PARENT_ID = "parentID";
 
 	/**
 	 * Constructs a new AddSubMenu object
@@ -157,15 +166,16 @@ public class AddSubMenu extends RPCRequest {
 	 * <p>Sets a Menu ID that identifies a sub menu.</p><p> This value is used in
 	 * {@linkplain AddCommand} to which SubMenu is the parent of the command
 	 * being added</p>
-	 * 
-	 * 
+	 *
+	 *
 	 * @param menuID
 	 *            an integer object representing a Menu ID
-	 *            
+	 *
 	 *           <p><b>Notes:</b> Min Value: 0; Max Value: 2000000000</p>
-	 */    
-    public void setMenuID( @NonNull Integer menuID ) {
-		setParameters(KEY_MENU_ID, menuID);
+	 */
+    public AddSubMenu setMenuID(@NonNull Integer menuID) {
+        setParameters(KEY_MENU_ID, menuID);
+        return this;
     }
 	/**
 	 * <p>Returns an <i>Integer</i> object representing the position of menu</p>
@@ -178,7 +188,7 @@ public class AddSubMenu extends RPCRequest {
     }
 	/**
 	 * Sets a position of menu
-	 * 
+	 *
 	 * @param position
 	 *            <p>An Integer object representing the position within the items
 	 *            of the top level Command Menu. 0 will insert at the front, 1
@@ -195,9 +205,10 @@ public class AddSubMenu extends RPCRequest {
 	 *            <li>If this parameter is omitted, the entry will be added at
 	 *            the end of the list</li>
 	 *            </ul>
-	 */    
-    public void setPosition( Integer position ) {
-		setParameters(KEY_POSITION, position);
+	 */
+    public AddSubMenu setPosition( Integer position) {
+        setParameters(KEY_POSITION, position);
+        return this;
     }
 	/**
 	 * Returns String which is displayed representing this submenu item
@@ -209,12 +220,13 @@ public class AddSubMenu extends RPCRequest {
     }
 	/**
 	 * Sets a menuName which is displayed representing this submenu item
-	 * 
+	 *
 	 * @param menuName
 	 *            String which will be displayed representing this submenu item
-	 */    
-    public void setMenuName( @NonNull String menuName ) {
-		setParameters(KEY_MENU_NAME, menuName);
+	 */
+    public AddSubMenu setMenuName(@NonNull String menuName) {
+        setParameters(KEY_MENU_NAME, menuName);
+        return this;
     }
 	/**
 	 * Returns Image to be be shown along with the submenu item
@@ -230,17 +242,19 @@ public class AddSubMenu extends RPCRequest {
 	 * @param menuIcon
 	 *            Image to be be shown along with the submenu item
 	 */
-	public void setMenuIcon(Image menuIcon) {
-		setParameters(KEY_MENU_ICON, menuIcon);
-	}
+	public AddSubMenu setMenuIcon( Image menuIcon) {
+        setParameters(KEY_MENU_ICON, menuIcon);
+        return this;
+    }
 
 	/**
 	 * Sets the layout of the submenu screen.
 	 * @param menuLayout - the menuLayout
 	 */
-	public void setMenuLayout(MenuLayout menuLayout) {
-		setParameters(KEY_MENU_LAYOUT, menuLayout);
-	}
+	public AddSubMenu setMenuLayout( MenuLayout menuLayout) {
+        setParameters(KEY_MENU_LAYOUT, menuLayout);
+        return this;
+    }
 
 	/**
 	 * Gets the layout of the submenu screen.
@@ -249,5 +263,28 @@ public class AddSubMenu extends RPCRequest {
 	@SuppressWarnings("unchecked")
 	public MenuLayout getMenuLayout() {
 		return (MenuLayout) getObject(MenuLayout.class, KEY_MENU_LAYOUT);
+	}
+
+	/**
+	 * Sets the parentID.
+	 *
+	 * @param parentID unique ID of the sub menu, the command will be added to. If not provided or 0, it will be
+	 * provided to the top level of the in application menu.
+	 * @since SmartDeviceLink 7.0.0
+	 */
+	public AddSubMenu setParentID( Integer parentID) {
+        setParameters(KEY_PARENT_ID, parentID);
+        return this;
+    }
+
+	/**
+	 * Gets the parentID.
+	 *
+	 * @return Integer unique ID of the sub menu, the command will be added to. If not provided or 0, it will be
+	 * provided to the top level of the in application menu.
+	 * @since SmartDeviceLink 7.0.0
+	 */
+	public Integer getParentID() {
+		return getInteger(KEY_PARENT_ID);
 	}
 }
