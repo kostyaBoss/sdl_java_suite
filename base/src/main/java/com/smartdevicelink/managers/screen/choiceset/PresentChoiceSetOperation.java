@@ -320,7 +320,7 @@ class PresentChoiceSetOperation extends Task {
 
 		keyboardRPCListener = new OnRPCNotificationListener() {
 			@Override
-			public void onNotified(RPCNotification notification) {
+			public void onNotified(RPCNotification notification, String applicationId) {
 				if (getState() == Task.CANCELED) {
 					finishOperation();
 					return;

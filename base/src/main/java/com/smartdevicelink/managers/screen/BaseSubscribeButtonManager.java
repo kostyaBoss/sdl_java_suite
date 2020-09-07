@@ -161,7 +161,7 @@ abstract class BaseSubscribeButtonManager extends BaseSubManager {
     private void setRpcNotificationListeners() {
         onButtonPressListener = new OnRPCNotificationListener() {
             @Override
-            public void onNotified(RPCNotification notification) {
+            public void onNotified(RPCNotification notification, String applicationId) {
                 OnButtonPress onButtonPressNotification = (OnButtonPress) notification;
                 CopyOnWriteArrayList<OnButtonListener> listeners = onButtonListeners.get(onButtonPressNotification.getButtonName());
                 if (listeners != null && listeners.size() > 0) {
@@ -175,7 +175,7 @@ abstract class BaseSubscribeButtonManager extends BaseSubManager {
 
         onButtonEventListener = new OnRPCNotificationListener() {
             @Override
-            public void onNotified(RPCNotification notification) {
+            public void onNotified(RPCNotification notification, String applicationId) {
                 OnButtonEvent onButtonEvent = (OnButtonEvent) notification;
                 CopyOnWriteArrayList<OnButtonListener> listeners = onButtonListeners.get(onButtonEvent.getButtonName());
                 if (listeners != null && listeners.size() > 0) {

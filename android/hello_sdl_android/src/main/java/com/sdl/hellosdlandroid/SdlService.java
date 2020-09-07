@@ -5,11 +5,11 @@ import android.util.Log;
 
 import com.smartdevicelink.components.BaseSdlService;
 import com.smartdevicelink.managers.CompletionListener;
-import com.smartdevicelink.managers.screen.OnButtonListener;
 import com.smartdevicelink.managers.SdlManager;
 import com.smartdevicelink.managers.SdlManagerListener;
 import com.smartdevicelink.managers.file.filetypes.SdlArtwork;
 import com.smartdevicelink.managers.lifecycle.LifecycleConfigurationUpdate;
+import com.smartdevicelink.managers.screen.OnButtonListener;
 import com.smartdevicelink.managers.screen.choiceset.ChoiceCell;
 import com.smartdevicelink.managers.screen.choiceset.ChoiceSet;
 import com.smartdevicelink.managers.screen.choiceset.ChoiceSetSelectionListener;
@@ -69,7 +69,7 @@ public class SdlService extends BaseSdlService {
 	// TCP/IP transport config
 	// The default port is 12345
 	// The IP is of the machine that is running SDL Core
-	private static final int TCP_PORT = 12247;
+	private static final int TCP_PORT = 18414;
 	private static final String DEV_MACHINE_IP_ADDRESS = "m.sdl.tools";
 
 	@Override
@@ -357,7 +357,7 @@ if (isNeedUpdate) {
 	/**
 	 * Attempts to Subscribe to all preset buttons
 	 */
-	private void subscribeToButtons() {
+	private void subscribeToButtons(final SdlManager sdlManager) {
 		ButtonName[] buttonNames = {ButtonName.PLAY_PAUSE, ButtonName.SEEKLEFT, ButtonName.SEEKRIGHT, ButtonName.AC_MAX, ButtonName.AC, ButtonName.RECIRCULATE,
 				ButtonName.FAN_UP, ButtonName.FAN_DOWN, ButtonName.TEMP_UP, ButtonName.TEMP_DOWN, ButtonName.FAN_DOWN, ButtonName.DEFROST_MAX, ButtonName.DEFROST_REAR, ButtonName.DEFROST,
 				ButtonName.UPPER_VENT, ButtonName.LOWER_VENT, ButtonName.VOLUME_UP, ButtonName.VOLUME_DOWN, ButtonName.EJECT, ButtonName.SOURCE, ButtonName.SHUFFLE, ButtonName.REPEAT};

@@ -67,7 +67,7 @@ abstract class BaseEncryptionLifecycleManager {
 
         OnRPCNotificationListener onHMIStatusListener = new OnRPCNotificationListener() {
             @Override
-            public void onNotified(RPCNotification notification) {
+            public void onNotified(RPCNotification notification, String applicationId) {
                 OnHMIStatus onHMIStatus = (OnHMIStatus) notification;
                 currentHMILevel = onHMIStatus.getHmiLevel();
                 checkStatusAndInitSecuredService();
@@ -76,7 +76,7 @@ abstract class BaseEncryptionLifecycleManager {
 
         OnRPCNotificationListener onPermissionsChangeListener = new OnRPCNotificationListener() {
             @Override
-            public void onNotified(RPCNotification notification) {
+            public void onNotified(RPCNotification notification, String applicationId) {
                 List<PermissionItem> permissionItems = ((OnPermissionsChange) notification).getPermissionItem();
                 Boolean requireEncryptionAppLevel = ((OnPermissionsChange) notification).getRequireEncryption();
                 encryptionRequiredRPCs.clear();

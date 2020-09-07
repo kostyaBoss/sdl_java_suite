@@ -9,9 +9,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
-import android.support.annotation.DrawableRes;
 import android.util.Log;
 import android.util.SparseArray;
+
+import androidx.annotation.DrawableRes;
 
 import com.smartdevicelink.managers.SdlManager;
 
@@ -20,7 +21,8 @@ public abstract class BaseSdlService extends Service implements ISdlService{
 	private static final String TAG = "SDL Service";
 	private static Integer serviceForegroundId = null;
 	private static String serviceName = null;
-	private static @DrawableRes Integer serviceIcon = null;
+	private static @DrawableRes
+	Integer serviceIcon = null;
 	private static String serviceTitle = null;
 
 	public SparseArray<SdlManager> sdlManagerMap = new SparseArray<>();

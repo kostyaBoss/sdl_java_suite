@@ -580,7 +580,7 @@ abstract class BaseLifecycleManager {
             CopyOnWriteArrayList<OnRPCNotificationListener> listeners = rpcNotificationListeners.get(FunctionID.getFunctionId(notification.getFunctionName()));
             if (listeners != null && listeners.size() > 0) {
                 for (OnRPCNotificationListener listener : listeners) {
-                    listener.onNotified(notification);
+                    listener.onNotified(notification, appConfig.getAppID());
                 }
                 return true;
             }
