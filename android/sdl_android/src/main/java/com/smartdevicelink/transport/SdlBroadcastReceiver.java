@@ -46,6 +46,7 @@ import android.os.Build;
 import android.os.Looper;
 import android.os.Parcelable;
 import android.util.AndroidRuntimeException;
+import android.util.Log;
 
 import androidx.annotation.CallSuper;
 
@@ -150,6 +151,8 @@ public abstract class SdlBroadcastReceiver extends BroadcastReceiver {
 
         HashMap<String, Object> vehicleInfoStore = (HashMap<String, Object>) intent.getSerializableExtra(TransportConstants.VEHICLE_INFO);
 
+        Log.d("MyTagLog", "store check");
+        Log.d("MyTagLog", String.valueOf(vehicleInfoStore == null));
         VehicleType vehicleType;
         if (vehicleInfoStore == null || vehicleInfoStore.isEmpty()){
             vehicleType = null;
@@ -256,6 +259,8 @@ public abstract class SdlBroadcastReceiver extends BroadcastReceiver {
             serviceIntent.putExtra(TransportConstants.VEHICLE_INFO, vehicleType.getStore());
         }
 
+//        Log.d("MyTagLog", vehicleType.getMake());
+
         try {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
                 context.startService(serviceIntent);
@@ -279,12 +284,16 @@ public abstract class SdlBroadcastReceiver extends BroadcastReceiver {
     }
 
     private boolean wakeUpRouterService(final Context context, final boolean ping, final boolean altTransportWake, final BluetoothDevice device, final VehicleType vehicleType) {
+        Log.d("MyTagLog", "wakeUprouterservice");
         new ServiceFinder(context, context.getPackageName(), new ServiceFinder.ServiceFinderCallback() {
             @Override
             public void onComplete(Vector<ComponentName> routerServices) {
                 runningBluetoothServicePackage = new Vector<>();
                 runningBluetoothServicePackage.addAll(routerServices);
                 if (runningBluetoothServicePackage.isEmpty()) {
+                    Log.d("MyTagLog", "if");
+//                    Log.d("MyTagLog", vehicleType.toString());
+
                     //If there isn't a service running we should try to start one
                     //We will try to sort the SDL enabled apps and find the one that's been installed the longest
                     final List<SdlAppInfo> sdlAppInfoList = AndroidTools.querySdlAppInfo(context, new SdlAppInfo.BestRouterComparator(), vehicleType);
@@ -319,6 +328,8 @@ public abstract class SdlBroadcastReceiver extends BroadcastReceiver {
                     }
 
                 } else { //There are currently running services
+                    Log.d("MyTagLog", "else");
+
                     if (DebugTool.isDebugEnabled()) {
                         for (ComponentName service : runningBluetoothServicePackage) {
                             DebugTool.logInfo(TAG, "Currently running router service: " + service.getPackageName());
@@ -581,6 +592,7 @@ public abstract class SdlBroadcastReceiver extends BroadcastReceiver {
                         synchronized (DEVICE_LISTENER_LOCK) {
                             sdlDeviceListener = null;
                             if (context != null) {
+                                Log.d("MyTagLog", "transport connected");
                                 final List<SdlAppInfo> sdlAppInfoList = AndroidTools.querySdlAppInfo(context, new SdlAppInfo.BestRouterComparator(), vehicleType);
                                 if (sdlAppInfoList != null && !sdlAppInfoList.isEmpty()) {
                                     ComponentName routerService = sdlAppInfoList.get(0).getRouterServiceComponentName();

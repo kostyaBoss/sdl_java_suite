@@ -125,29 +125,32 @@ public class DebugTool {
     }
 
     public static void logInfo(String tag, String msg) {
-        Boolean wasWritten = false;
-
-        msg = prependProxyVersionNumberToString(msg);
-
-        wasWritten = logToSiphon(msg);
-
-        if (isInfoEnabled && !wasWritten) {
-            tag = tag != null ? tag : TAG;
-            NativeLogTool.logInfo(tag, msg);
-        }
+        android.util.Log.d(tag, msg);
+//        Boolean wasWritten = false;
+//
+//        msg = prependProxyVersionNumberToString(msg);
+//
+//        wasWritten = logToSiphon(msg);
+//
+//        if (isInfoEnabled && !wasWritten) {
+//            tag = tag != null ? tag : TAG;
+//            NativeLogTool.logInfo(tag, msg);
+//        }
     }
 
     public static void logInfo(String tag, String msg, Boolean bPrependVersion) {
-        Boolean wasWritten = false;
+        android.util.Log.d(tag, msg);
 
-        if (bPrependVersion) msg = prependProxyVersionNumberToString(msg);
-
-        wasWritten = logToSiphon(msg);
-
-        if (isInfoEnabled && !wasWritten) {
-            tag = tag != null ? tag : TAG;
-            NativeLogTool.logInfo(tag, msg);
-        }
+//        Boolean wasWritten = false;
+//
+//        if (bPrependVersion) msg = prependProxyVersionNumberToString(msg);
+//
+//        wasWritten = logToSiphon(msg);
+//
+//        if (isInfoEnabled && !wasWritten) {
+//            tag = tag != null ? tag : TAG;
+//            NativeLogTool.logInfo(tag, msg);
+//        }
     }
 
     protected static Boolean logToSiphon(String msg) {

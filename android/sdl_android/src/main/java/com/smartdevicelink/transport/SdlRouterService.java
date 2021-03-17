@@ -71,6 +71,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
 import android.os.RemoteException;
 import android.util.AndroidRuntimeException;
+import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
 
@@ -1086,6 +1087,7 @@ public class SdlRouterService extends Service {
      * @return true if this service is set up correctly
      */
     private boolean initCheck() {
+        Log.d("MyTagLog", "init check");
         if (!processCheck()) {
             DebugTool.logError(TAG, "Not using correct process. Shutting down");
             wrongProcess = true;
@@ -1120,6 +1122,7 @@ public class SdlRouterService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        Log.d("MyTagLog", "onCreate");
         if (AndroidTools.isDebugMode(getApplicationContext())) {
             IntegrationValidator.ValidationResult result = IntegrationValidator.validate(getApplicationContext(), this.getClass(), 0);
             if (!result.isSuccessful()) {
@@ -1243,6 +1246,7 @@ public class SdlRouterService extends Service {
     @SuppressLint({"NewApi", "MissingPermission"})
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d("MyTagLog", "onStartCommand");
         if (intent != null && intent.hasExtra(TransportConstants.VEHICLE_INFO)) {
             receivedVehicleType = new VehicleType(
                     (HashMap<String, Object>) intent.getSerializableExtra(TransportConstants.VEHICLE_INFO)

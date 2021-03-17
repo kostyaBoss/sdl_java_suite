@@ -39,6 +39,7 @@ import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -59,6 +60,8 @@ import com.smartdevicelink.util.SdlAppInfo;
 import java.lang.ref.WeakReference;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 
 public class SdlDeviceListener {
@@ -66,7 +69,7 @@ public class SdlDeviceListener {
     private static final String TAG = "SdlListener";
     private static final int MIN_VERSION_REQUIRED = 13;
     private static final String SDL_DEVICE_STATUS_SHARED_PREFS = "sdl.device.status";
-    private static final Object LOCK = new Object(), RUNNING_LOCK = new Object();
+    private static final Lock LOCK = new ReentrantLock(), RUNNING_LOCK = new ReentrantLock();
 
     private final WeakReference<Context> contextWeakReference;
     private final Callback callback;
@@ -94,6 +97,7 @@ public class SdlDeviceListener {
      * will listen for 30 seconds, if it is not, this will listen for 15 seconds instead.
      */
     public void start() {
+        Log.d("MyTagSdlDeviceLog", "start");
         if (connectedDevice == null) {
             DebugTool.logInfo(TAG, ": No supplied bluetooth device");
             if (callback != null) {
@@ -102,7 +106,10 @@ public class SdlDeviceListener {
             return;
         }
 
+        Log.d("MyTagSdlDeviceLog", "start2");
+
         if (hasSDLConnected(contextWeakReference.get(), connectedDevice.getAddress())) {
+            Log.d("MyTagSdlDeviceLog", "if2");
             DebugTool.logInfo(TAG, ": Confirmed SDL device, should start router service");
             //This device has connected to SDL previously, it is ok to start the RS right now
             VehicleType vehicleType = null;
@@ -110,9 +117,11 @@ public class SdlDeviceListener {
             if (store != null) {
                 vehicleType = new VehicleType(store);
             }
+            Log.d("MyTagSdlDeviceLog", String.valueOf(vehicleType == null));
             callback.onTransportConnected(contextWeakReference.get(), connectedDevice, vehicleType);
             return;
         }
+
         synchronized (RUNNING_LOCK) {
             isRunning = true;
             // set timeout = if first time seeing BT device, 30s, if not 15s
@@ -122,6 +131,8 @@ public class SdlDeviceListener {
             bluetoothHandler = new TransportHandler(this);
             bluetoothTransport = new MultiplexBluetoothTransport(bluetoothHandler);
             bluetoothTransport.start();
+            Log.d("MyTagSdlDeviceLog", "start3");
+
             timeoutRunner = new Runnable() {
                 @Override
                 public void run() {
@@ -160,6 +171,7 @@ public class SdlDeviceListener {
 
         @Override
         public void handleMessage(@NonNull Message msg) {
+            DebugTool.logInfo("MyTagLog", "handle message");
             if (this.provider.get() == null) {
                 return;
             }
@@ -169,6 +181,7 @@ public class SdlDeviceListener {
                 case SdlRouterService.MESSAGE_STATE_CHANGE:
                     switch (msg.arg1) {
                         case MultiplexBaseTransport.STATE_CONNECTED:
+                            DebugTool.logInfo("MyTagLog", "sendStartService");
                             sendStartService();
                             break;
                         case MultiplexBaseTransport.STATE_NONE:
@@ -182,6 +195,7 @@ public class SdlDeviceListener {
                     break;
 
                 case com.smartdevicelink.transport.SdlRouterService.MESSAGE_READ:
+                    DebugTool.logInfo("MyTagLog", "message read");
                     onPacketRead((SdlPacket) msg.obj);
                     break;
             }
@@ -205,6 +219,7 @@ public class SdlDeviceListener {
                 }
                 notifyConnection(vehicleType);
             }
+            DebugTool.logInfo("MyTagLog", "onPacketRead");
             int hashID = BitConverter.intFromByteArray(packet.getPayload(), 0);
             byte[] stopService = SdlPacketFactory.createEndSession(SessionType.RPC, (byte)packet.getSessionId(), 0, (byte)packet.getVersion(), hashID).constructPacket();
             if (sdlListener.bluetoothTransport != null && sdlListener.bluetoothTransport.getState() == MultiplexBluetoothTransport.STATE_CONNECTED) {
@@ -290,11 +305,14 @@ public class SdlDeviceListener {
      * @return if an SDL connection has ever been established with this device
      */
     public static boolean hasSDLConnected(Context context, String address) {
+        Log.d("MyTagHasSdlConnected", String.valueOf(Thread.holdsLock(LOCK)));
         synchronized (LOCK) {
             if (context != null) {
                 SharedPreferences preferences = context.getSharedPreferences(SDL_DEVICE_STATUS_SHARED_PREFS, Context.MODE_PRIVATE);
+                Log.d("MyTagHasSdlConnected", String.valueOf(preferences.contains(address) && preferences.getBoolean(address, false)));
                 return preferences.contains(address) && preferences.getBoolean(address, false);
             }
+            Log.d("MyTagHasSdlConnected", "false");
             return false;
         }
     }

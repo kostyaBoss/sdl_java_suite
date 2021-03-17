@@ -39,6 +39,7 @@ import android.content.IntentFilter;
 import android.content.pm.ResolveInfo;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import com.smartdevicelink.transport.SdlRouterService;
 
@@ -48,6 +49,7 @@ import java.util.Vector;
 import static com.smartdevicelink.transport.TransportConstants.BIND_LOCATION_CLASS_NAME_EXTRA;
 import static com.smartdevicelink.transport.TransportConstants.BIND_LOCATION_PACKAGE_NAME_EXTRA;
 import static com.smartdevicelink.transport.TransportConstants.SEND_PACKET_TO_APP_LOCATION_EXTRA_NAME;
+import static com.smartdevicelink.transport.TransportConstants.VEHICLE_INFO;
 
 /**
  * Created by Joey Grover on 8/18/17.
@@ -87,7 +89,7 @@ public class ServiceFinder {
 
         //Send out our broadcast
         context.sendBroadcast(createQueryIntent(this.receiverLocation));
-
+        Log.d("MyTagLog", "ServiceFinder");
 
     }
 
@@ -97,6 +99,7 @@ public class ServiceFinder {
         @Override
         public void onReceive(Context context, Intent intent) {
             DebugTool.logInfo(TAG, "Received intent " + intent);
+            Log.d("MyTagLogReceive", String.valueOf(intent.hasExtra(VEHICLE_INFO)));
             if (intent != null) {
                 String packageName = intent.getStringExtra(BIND_LOCATION_PACKAGE_NAME_EXTRA);
                 String className = intent.getStringExtra(BIND_LOCATION_CLASS_NAME_EXTRA);

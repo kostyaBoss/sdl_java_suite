@@ -186,6 +186,8 @@ public class AndroidTools {
 
             if (!oldRouterService) {
                 for (SdlAppInfo appInformation : sdlAppInfoList) {
+                    Log.d("MyTagCheck", String.valueOf(appInformation.checkIfVehicleSupported(appInformation.vehicleMakesList, type)));
+//                    Log.d("MyTagVehicleType", type.getMake());
                     if (appInformation.checkIfVehicleSupported(appInformation.vehicleMakesList, type)) {
                         sdlAppInfoListVehicleType.add(appInformation);
                     }
@@ -275,6 +277,7 @@ public class AndroidTools {
         synchronized (LOCK) {
 
             if (vehicleType == null || address == null) {
+                Log.d("MyTagLog", String.valueOf(vehicleType == null));
                 return;
             }
             try {
