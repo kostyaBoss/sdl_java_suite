@@ -171,8 +171,9 @@ public class SdlDeviceListener {
 
         @Override
         public void handleMessage(@NonNull Message msg) {
-            DebugTool.logInfo("MyTagLog", "handle message");
+            DebugTool.logInfo("MyTagLogDeviceListener", "handle message");
             if (this.provider.get() == null) {
+                DebugTool.logInfo("MyTagLogDeviceListener", "provider get");
                 return;
             }
             SdlDeviceListener sdlListener = this.provider.get();
@@ -181,21 +182,23 @@ public class SdlDeviceListener {
                 case SdlRouterService.MESSAGE_STATE_CHANGE:
                     switch (msg.arg1) {
                         case MultiplexBaseTransport.STATE_CONNECTED:
-                            DebugTool.logInfo("MyTagLog", "sendStartService");
+                            DebugTool.logInfo("MyTagLogDeviceListener", "sendStartService");
                             sendStartService();
                             break;
                         case MultiplexBaseTransport.STATE_NONE:
+                            DebugTool.logInfo("MyTagLogDeviceListener", "state none");
                             // We've just lost the connection
                             sdlListener.callback.onTransportDisconnected(sdlListener.connectedDevice);
                             break;
                         case MultiplexBaseTransport.STATE_ERROR:
+                            DebugTool.logInfo("MyTagLogDeviceListener", "state error");
                             sdlListener.callback.onTransportError(sdlListener.connectedDevice);
                             break;
                     }
                     break;
 
                 case com.smartdevicelink.transport.SdlRouterService.MESSAGE_READ:
-                    DebugTool.logInfo("MyTagLog", "message read");
+                    DebugTool.logInfo("MyTagLogDeviceListener", "message read");
                     onPacketRead((SdlPacket) msg.obj);
                     break;
             }

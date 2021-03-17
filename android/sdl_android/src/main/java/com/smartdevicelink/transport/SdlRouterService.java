@@ -1247,6 +1247,12 @@ public class SdlRouterService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d("MyTagLog", "onStartCommand");
+        Bundle bundle = intent.getExtras();
+        if (bundle != null) {
+            for (String key : bundle.keySet()) {
+                Log.d("MyTagLogIntent", key + " : " + (bundle.get(key) != null ? bundle.get(key) : "NULL"));
+            }
+        }
         if (intent != null && intent.hasExtra(TransportConstants.VEHICLE_INFO)) {
             receivedVehicleType = new VehicleType(
                     (HashMap<String, Object>) intent.getSerializableExtra(TransportConstants.VEHICLE_INFO)

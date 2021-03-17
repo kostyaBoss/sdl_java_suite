@@ -41,7 +41,9 @@ import android.hardware.usb.UsbManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.util.Log;
 
+import com.smartdevicelink.proxy.rpc.VehicleType;
 import com.smartdevicelink.util.AndroidTools;
 import com.smartdevicelink.util.DebugTool;
 import com.smartdevicelink.util.SdlAppInfo;
@@ -144,6 +146,11 @@ public class USBAccessoryAttachmentActivity extends Activity {
                     //We will try to sort the SDL enabled apps and find the one that's been installed the longest
                     Intent serviceIntent;
                     List<SdlAppInfo> sdlAppInfoList = AndroidTools.querySdlAppInfo(context, new SdlAppInfo.BestRouterComparator(), null);
+
+                    for (SdlAppInfo info: sdlAppInfoList) {
+                        for (VehicleType type: info.getVehicleMakesList())
+                            Log.d("MyTagLogUSB", type.getMake());
+                    }
 
                     if (sdlAppInfoList != null && !sdlAppInfoList.isEmpty()) {
                         SdlAppInfo optimalRouterService = sdlAppInfoList.get(0);

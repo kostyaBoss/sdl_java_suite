@@ -54,6 +54,7 @@ import com.smartdevicelink.transport.enums.TransportType;
 import com.smartdevicelink.transport.utl.TransportRecord;
 import com.smartdevicelink.util.BitConverter;
 import com.smartdevicelink.util.DebugTool;
+import com.smartdevicelink.util.Log;
 import com.smartdevicelink.util.Version;
 
 import java.io.ByteArrayOutputStream;
@@ -1164,13 +1165,18 @@ public class SdlProtocolBase {
             //In the future we should move this logic into the Protocol Layer
             TransportRecord transportRecord = getTransportForSession(SessionType.RPC);
             if (transportRecord == null && !requestedSession) { //There is currently no transport registered
+                DebugTool.logInfo(TAG, "onTransportConnected if");
+
                 requestedSession = true;
                 synchronized (TRANSPORT_MANAGER_LOCK) {
                     if (transportManager != null) {
+                        DebugTool.logInfo(TAG, "onTransportConnected request");
                         transportManager.requestNewSession(getPreferredTransport(requestedPrimaryTransports, connectedTransports));
                     }
                 }
             }
+            DebugTool.logInfo(TAG, "onTransportsConnectedUpdate");
+
             onTransportsConnectedUpdate(connectedTransports);
             if (DebugTool.isDebugEnabled()) {
                 printActiveTransports();
