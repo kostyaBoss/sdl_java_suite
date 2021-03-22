@@ -36,6 +36,7 @@ import com.smartdevicelink.protocol.SdlPacket;
 import com.smartdevicelink.transport.enums.TransportType;
 import com.smartdevicelink.transport.utl.TransportRecord;
 import com.smartdevicelink.util.DebugTool;
+import com.smartdevicelink.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -85,6 +86,7 @@ public class MultiplexBluetoothTransport extends MultiplexBaseTransport {
      */
     public MultiplexBluetoothTransport(Handler handler) {
         super(handler, TransportType.BLUETOOTH);
+        DebugTool.logInfo("MultiplexBluetoothTransport", "has been instantiated");
     }
 
     //These methods are used so we can have a semi-static reference to the Accept Thread (Static reference inherited by housing class)

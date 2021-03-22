@@ -271,6 +271,9 @@ public class TransportManager extends TransportManagerBase {
         public synchronized boolean onHardwareConnected(List<TransportRecord> transports) {
             super.onHardwareConnected(transports);
             DebugTool.logInfo(TAG, "OnHardwareConnected");
+            for (TransportRecord record: transports){
+                DebugTool.logInfo(TAG + "record", String.valueOf(record.getType()));
+            }
             if (shuttingDown) {
                 return false;
             }
@@ -297,6 +300,7 @@ public class TransportManager extends TransportManagerBase {
         public synchronized void onHardwareDisconnected(TransportRecord record, List<TransportRecord> connectedTransports) {
             if (record != null) {
                 DebugTool.logInfo(TAG, "Transport disconnected - " + record);
+                DebugTool.logInfo(TAG, record.getClass().getCanonicalName());
             } else {
                 DebugTool.logInfo(TAG, "Transport disconnected");
 
