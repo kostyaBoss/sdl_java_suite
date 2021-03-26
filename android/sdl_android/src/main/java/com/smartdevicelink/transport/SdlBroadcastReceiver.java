@@ -107,6 +107,8 @@ public abstract class SdlBroadcastReceiver extends BroadcastReceiver {
 
         BluetoothDevice device = null;
 
+        Log.d("MyTagIntentAction", action);
+
         if (action.equalsIgnoreCase(Intent.ACTION_PACKAGE_ADDED)
                 || action.equalsIgnoreCase(Intent.ACTION_PACKAGE_REPLACED)) {
             //The package manager has sent out a new broadcast.

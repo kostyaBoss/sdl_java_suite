@@ -78,6 +78,7 @@ public class SdlDeviceListener {
     private TransportHandler bluetoothHandler;
     private Handler timeoutHandler;
     private Runnable timeoutRunner;
+    private int timeout = 15000;
     private boolean isRunning = false;
 
 
@@ -125,7 +126,7 @@ public class SdlDeviceListener {
         synchronized (RUNNING_LOCK) {
             isRunning = true;
             // set timeout = if first time seeing BT device, 30s, if not 15s
-            int timeout = isFirstStatusCheck(connectedDevice.getAddress()) ? 30000 : 15000;
+            timeout = isFirstStatusCheck(connectedDevice.getAddress()) ? 30000 : 15000;
             //Set our preference as false for this device for now
             setSDLConnectedStatus(contextWeakReference.get(), connectedDevice.getAddress(), false);
             bluetoothHandler = new TransportHandler(this);
@@ -136,13 +137,9 @@ public class SdlDeviceListener {
             timeoutRunner = new Runnable() {
                 @Override
                 public void run() {
-                    if (bluetoothTransport != null) {
-                        int state = bluetoothTransport.getState();
-                        if (state != MultiplexBluetoothTransport.STATE_CONNECTED) {
-                            DebugTool.logInfo(TAG, ": No bluetooth connection made");
-                            bluetoothTransport.stop();
-                        } //else BT is connected; it will close itself through callbacks
-                    }
+                     DebugTool.logInfo(TAG, ": No bluetooth connection made");
+                     //close BT connection if we did not connect BT or if IVI did not respond to start service request
+                     stopBtConnection();
                 }
             };
             timeoutHandler = new Handler(Looper.getMainLooper());
@@ -182,7 +179,10 @@ public class SdlDeviceListener {
                 case SdlRouterService.MESSAGE_STATE_CHANGE:
                     switch (msg.arg1) {
                         case MultiplexBaseTransport.STATE_CONNECTED:
-                            DebugTool.logInfo("MyTagLogDeviceListener", "sendStartService");
+                            DebugTool.logInfo(TAG,"MultiplexBaseTransport.STATE_CONNECTED");
+                            //when startservice sent, we delay stopping BT socket. Since, we might miss
+                            //start service ack from IVI if timeout equals 15000
+                            sdlListener.timeoutHandler.postDelayed(sdlListener.timeoutRunner,sdlListener.timeout);
                             sendStartService();
                             break;
                         case MultiplexBaseTransport.STATE_NONE:
@@ -249,18 +249,24 @@ public class SdlDeviceListener {
         }
 
         public void notifyConnection(VehicleType vehicleType) {
+            DebugTool.logInfo(TAG,"SDL device listener found an SDL IVI. Notifying connection.");
             SdlDeviceListener sdlListener = this.provider.get();
             sdlListener.setSDLConnectedStatus(sdlListener.contextWeakReference.get(), sdlListener.connectedDevice.getAddress(), true);
             AndroidTools.saveVehicleType(sdlListener.contextWeakReference.get(), vehicleType, sdlListener.connectedDevice.getAddress());
             boolean keepConnectionOpen = sdlListener.callback.onTransportConnected(sdlListener.contextWeakReference.get(), sdlListener.connectedDevice, vehicleType);
             if (!keepConnectionOpen) {
-                sdlListener.bluetoothTransport.stop();
-                sdlListener.bluetoothTransport = null;
-                sdlListener.timeoutHandler.removeCallbacks(sdlListener.timeoutRunner);
+                sdlListener.stopBtConnection();
             }
         }
     }
 
+    private void stopBtConnection(){
+        if(bluetoothTransport != null) {
+            bluetoothTransport.stop();
+            bluetoothTransport = null;
+            timeoutHandler.removeCallbacks(timeoutRunner);
+        }
+    }
 
     /**
      * Set the connection establishment status of the particular device
